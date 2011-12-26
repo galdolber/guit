@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+		
+	</ui:style>
+	<span>
+		<div ui:field="div">Hello world!</div>
+		
+		<div ui:field="div1">Hello world!</div>
+		
+		<span ui:field="span">Span</span>
+	</span>
+</ui:UiBinder> 

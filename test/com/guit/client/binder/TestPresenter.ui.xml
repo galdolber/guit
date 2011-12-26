@@ -1,0 +1,62 @@
+<!--
+  Copyright 2010 Gal Dolber.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+		
+	</ui:style>
+	<g:HTMLPanel>
+		<g:Button ui:field="button"></g:Button>
+		
+		<g:Button ui:field="button2"></g:Button>
+		
+		<g:Button ui:field="runasync"></g:Button>
+		
+		<g:Button ui:field="debug"></g:Button>
+		
+		<g:TextBox ui:field="textbox"></g:TextBox>
+		
+		<g:TextBox ui:field="providedTextbox"></g:TextBox>
+		
+		<g:Button ui:field="userAction"></g:Button>
+		
+		<g:Button ui:field="preventDefault"></g:Button>
+		
+		<g:Button ui:field="provided"></g:Button>
+		
+		<g:FocusPanel ui:field="stopPropagationPanel">
+			<g:Label ui:field="stopPropagation"></g:Label>
+		</g:FocusPanel>
+		
+		<g:FocusPanel ui:field="dontStopPropagationPanel">
+			<g:Label ui:field="dontStopPropagation"></g:Label>
+		</g:FocusPanel>
+
+		<g:HTML ui:field="html">
+			<div>
+				<div value="false" ui:field="falseElement"></div>
+			</div>
+			<div>
+				<div value="true" ui:field="trueElement"></div>
+			</div>
+		</g:HTML>
+		
+		<div ui:field="div"></div>
+		
+		<img ui:field="image"></img>
+	</g:HTMLPanel>
+</ui:UiBinder> 

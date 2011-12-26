@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:d="urn:import:com.google.gwt.user.datepicker.client">
+	<ui:style>
+		
+	</ui:style>
+	<g:HTMLPanel>
+		<g:TextBox ui:field="name"></g:TextBox>
+		<g:IntegerBox ui:field="votes"></g:IntegerBox>
+		<g:DoubleBox ui:field="age"></g:DoubleBox>
+		<g:CheckBox ui:field="enabled"></g:CheckBox>
+		<d:DateBox ui:field="birthday"></d:DateBox>
+	</g:HTMLPanel>
+</ui:UiBinder> 

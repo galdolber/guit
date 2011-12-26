@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.2.0//EN" "http://google-web-toolkit.googlecode.com/svn/tags/2.2.0/distro-source/core/src/gwt-module.dtd">
+<module>
+	<inherits name="com.guit.Guit" />
+	<inherits name="com.google.gwt.junit.JUnit"/>
+	
+	<extend-configuration-property name="app.controller" value="com.guit.client.binder.prefix.client.SimplePrefixPresenter"/>
+
+	<extend-property values="PrefixA,PrefixB,PrefixC, PrefixINV" name="ui.xml.prefix"/>
+	<set-property-fallback name="ui.xml.prefix" value="PrefixA" />
+</module>

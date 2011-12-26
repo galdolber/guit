@@ -1,0 +1,7 @@
+.gwt
+.settings
+gwt-unitCache
+target/test-classes
+www-test
+war
+target
