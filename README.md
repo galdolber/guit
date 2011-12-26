@@ -18,7 +18,7 @@ Aside from code elegancy and testing support, the main goal behind guit is to re
 
 In short: **make you more productive**
 
-### Code generation, the less I write the better!
+### Code generation, the less you write the better!
 
 To accomplish its goal it uses tree types of code generation:
 
