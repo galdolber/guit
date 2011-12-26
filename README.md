@@ -6,11 +6,11 @@ I'm migrating guit from google code, where there are a lot of old and ugly docs.
 
 ### Components
 
- ** Command Service: easy server-client communication with autobaching, caching, server preprocessors and more
- ** Place Manager: history management with automatic serialization, runasync and more
- ** Guit Binder: mvp pattern implemented in a uibinder fashion with a testable dom abstraction, a plugin system, multi device support and more
- ** Displays framework: an easy way to manage your screen containers
- ** Google analytics built-in: one line integration with google analytics
+ * Command Service: easy server-client communication with autobaching, caching, server preprocessors and more
+ * Place Manager: history management with automatic serialization, runasync and more
+ * Guit Binder: mvp pattern implemented in a uibinder fashion with a testable dom abstraction, a plugin system, multi device support and more
+ * Displays framework: an easy way to manage your screen containers
+ * Google analytics built-in: one line integration with google analytics
 
 ### Goal
 
@@ -21,9 +21,9 @@ In short: *make you more productive*
 ### Code generation, the less I write the better!
 
 To accomplish its goal it uses tree types of code generation:
- ** Gwt generators: this is code you will never see (i.e: static events binding)
- ** Annotation processing: this ones generate a lot of code that you'll have to write otherwise, you can see the generated code and reference it while coding, but you don't have to maintain it
- ** Static code generation: this last ones are still incomplete, the goal is to generate a start point for common situations (i.e cruds)
+ * Gwt generators: this is code you will never see (i.e: static events binding)
+ * Annotation processing: this ones generate a lot of code that you'll have to write otherwise, you can see the generated code and reference it while coding, but you don't have to maintain it
+ * Static code generation: this last ones are still incomplete, the goal is to generate a start point for common situations (i.e cruds)
 
 ### Maven 
 
