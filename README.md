@@ -20,7 +20,7 @@ In short: **make you more productive**
 
 ### Code generation, the less you write the better!
 
-To accomplish its goal it uses tree types of code generation:
+To accomplish its goal it uses three types of code generation:
 
  * Gwt generators: this is code you will never see (i.e: static events binding)
  * Annotation processing: this ones generate a lot of code that you'll have to write otherwise, you can see the generated code and reference it while coding, but you don't have to maintain it
