@@ -1,4 +1,4 @@
-Because big projects can be elegant when the right way is the fastest way
+Because big projects can be elegant when the right way is the fastest one
 
 ### About documentation
 
