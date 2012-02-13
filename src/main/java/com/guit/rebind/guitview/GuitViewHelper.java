@@ -20,6 +20,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.rebind.UiBinderGenerator;
+import com.google.inject.Inject;
 
 import com.guit.client.ViewProperties;
 import com.guit.client.binder.ViewField;
@@ -101,7 +102,8 @@ public class GuitViewHelper {
           name = f.getName();
         }
 
-        if (f.getAnnotation(ViewField.class).provided()) {
+        if (f.getAnnotation(ViewField.class).provided() || f.isAnnotationPresent(Inject.class)
+            || f.isAnnotationPresent(javax.inject.Inject.class)) {
           if (providedFields.contains(name)) {
             logger.log(Type.ERROR, "There can be only one provided @ViewField for a field. Found: "
                 + baseClass.getQualifiedSourceName() + "." + f.getName());

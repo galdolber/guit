@@ -33,11 +33,14 @@ import java.util.ArrayList;
  */
 public class CommandRpcImpl implements CommandRpc {
 
-  private Injector injector;
+  @Inject
+  Injector injector;
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public Response execute(Action<Response> action) throws CommandException {
+    CommandHook commandHook = injector.getInstance(CommandHook.class);
+
     Class<? extends Action> actionClass = action.getClass();
     if (!actionClass.isAnnotationPresent(ActionHandler.class)) {
       throw new IllegalStateException("The action " + actionClass.getCanonicalName()
@@ -49,8 +52,17 @@ public class CommandRpcImpl implements CommandRpc {
       Handler<Action<Response>, Response> rpcHandler =
           (Handler<Action<Response>, Response>) injector.getInstance(handlerClass);
 
-      return rpcHandler.handle(action);
+      Response response = rpcHandler.handle(action);
+
+      if (commandHook != null) {
+        commandHook.success(action, response);
+      }
+
+      return response;
     } catch (CommandException e) {
+      if (commandHook != null) {
+        commandHook.exception(action, e);
+      }
       throw e;
     }
   }
@@ -66,11 +78,6 @@ public class CommandRpcImpl implements CommandRpc {
       }
     }
     return batch;
-  }
-
-  @Inject
-  public void injectInjector(Injector injector) {
-    this.injector = injector;
   }
 
   private Class<?> findClass(String className) {
