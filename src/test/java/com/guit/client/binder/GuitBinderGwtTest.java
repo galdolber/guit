@@ -31,8 +31,13 @@ import com.guit.client.async.event.AsyncExceptionEvent;
 import com.guit.client.binder.useraction.event.UserActionEvent;
 import com.guit.client.binder.useraction.event.UserActionHandler;
 import com.guit.client.common.HasState;
+import com.guit.client.dom.Div;
+import com.guit.client.dom.GuitDom;
+import com.guit.client.dom.Span;
+import com.guit.client.dom.impl.GuitDomImpl;
 
 import java.util.Date;
+import java.util.List;
 
 public class GuitBinderGwtTest extends GWTTestCase {
 
@@ -59,6 +64,22 @@ public class GuitBinderGwtTest extends GWTTestCase {
     eventBus = GuitEntryPoint.getEventBus();
   }
 
+  GuitDom f = new GuitDomImpl();
+  
+  public void testexSelector() {
+    Div e = f.div();
+    e.html("<div><input name='name' /></div>");
+
+    com.guit.client.dom.Element el = f.element("span");
+    el.attr("name", "name");
+    Span span = f.span().from(el);
+    assertEquals("name", span.attr("name"));
+
+    List<com.guit.client.dom.Element> r = e.query("* input[name='name']");
+    assertEquals(1, r.size());
+    assertEquals("input", r.get(0).tag());
+  }
+  
   public void testElementsClick() {
     NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
 

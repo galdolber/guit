@@ -4,6 +4,6 @@
 	<inherits name="com.guit.Guit" />
 	
 	<extend-configuration-property name="app.controller" value="com.guit.client.binder.WidgetPresenter"/>
-	<extend-configuration-property name="app.controller" value="com.guit.client.binder.TestPresenter"/>
+	<extend-configuration-property name="app.controller" value="com.guit.client.binder.SomePresenter"/>
 	<extend-configuration-property name="app.controller" value="com.guit.client.binder.EditorPresenter"/>
 </module>

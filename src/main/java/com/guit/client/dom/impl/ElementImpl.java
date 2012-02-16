@@ -143,7 +143,7 @@ public class ElementImpl implements Element {
   @Override
   public List<Element> query(String selectors) {
     ArrayList<Element> elements = new ArrayList<Element>();
-    for (com.google.gwt.dom.client.Element element : GQuery.$(e).children(selectors).elements()) {
+    for (com.google.gwt.dom.client.Element element : GQuery.$(e).find(selectors).elements()) {
       elements.add(new ElementImpl(element));
     }
     return elements;

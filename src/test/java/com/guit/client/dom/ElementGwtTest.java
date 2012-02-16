@@ -66,7 +66,7 @@ public class ElementGwtTest {
     assertFalse(e.hasAttribute(attrName));
 
     // Style
-    String styleProp = "background-color";
+    String styleProp = "backgroundColor";
     String styleValue = "red";
     e.css(styleProp, styleValue);
     assertEquals(styleValue, e.css(styleProp));
