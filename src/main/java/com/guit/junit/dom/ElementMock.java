@@ -432,7 +432,8 @@ public class ElementMock implements Element {
 
   @Override
   public int propertyInt(String name) {
-    return (Integer) properties.get(name.toLowerCase());
+    Object i = properties.get(name.toLowerCase());
+    return (Integer) (i == null ? 0 : i);
   }
 
   @Override
