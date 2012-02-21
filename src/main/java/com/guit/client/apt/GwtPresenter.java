@@ -1,5 +1,7 @@
 package com.guit.client.apt;
 
+import com.guit.client.Presenter;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -23,4 +25,6 @@ public @interface GwtPresenter {
   boolean isWidget() default false;
 
   String title() default "";
+  
+  Class<? extends Presenter> extendsPresenter() default Presenter.class;
 }

@@ -157,6 +157,8 @@ public class GuitBinderGenerator extends AbstractGenerator {
         presenterType = presenterType.isRawType().getBaseType();
       }
     }
+    
+    checkForRepetition(presenterType);
 
     // Presenter or controller
     boolean isPresenter = checkIsPresenter(presenterType);
@@ -227,19 +229,22 @@ public class GuitBinderGenerator extends AbstractGenerator {
       writer.println("if (pool.isEmpty()) {");
       writer.println("view = (" + viewTypeName + ") new " + viewTypeName + "();");
 
+      ArrayList<JField> fields = new ArrayList<JField>();
+      collectAllFields(presenterType, fields);
+
       // Provided fields
-      printProvidedFields(presenterType, validBindingFieldsTypes, writer, false);
+      printProvidedFields(presenterType, validBindingFieldsTypes, writer, false, fields);
 
       writer.println("view.bind();");
       writer.println("} else {");
       writer.println("view = (" + viewTypeName + ") pool.pop();");
 
       // Provided fields
-      printProvidedFields(presenterType, validBindingFieldsTypes, writer, true);
+      printProvidedFields(presenterType, validBindingFieldsTypes, writer, true, fields);
 
       writer.println("}");
 
-      printViewFieldBindings(writer, presenterType, viewTypeName, validBindingFieldsTypes);
+      printViewFieldBindings(writer, presenterType, viewTypeName, validBindingFieldsTypes, fields);
       printViewBindingMethods(writer, presenterType, viewTypeName, validBindingFieldsTypes);
 
       // Initializers
@@ -318,9 +323,8 @@ public class GuitBinderGenerator extends AbstractGenerator {
   }
 
   private void printProvidedFields(JClassType baseClass,
-      HashMap<String, JType> validBindingFieldsTypes, SourceWriter writer, boolean fromPool)
-      throws UnableToCompleteException {
-    JField[] fields = baseClass.getFields();
+      HashMap<String, JType> validBindingFieldsTypes, SourceWriter writer, boolean fromPool,
+      ArrayList<JField> fields) throws UnableToCompleteException {
     for (JField f : fields) {
       if (f.isAnnotationPresent(ViewField.class)) {
         String name = f.getAnnotation(ViewField.class).name();
@@ -346,6 +350,17 @@ public class GuitBinderGenerator extends AbstractGenerator {
           }
         }
       }
+    }
+  }
+
+  // TODO cache
+  private void collectAllFields(JClassType clazz, ArrayList<JField> list) {
+    for (JField jField : clazz.getFields()) {
+      list.add(jField);
+    }
+    JClassType superclass = clazz.getSuperclass();
+    if (superclass != null) {
+      collectAllFields(superclass, list);
     }
   }
 
@@ -609,7 +624,8 @@ public class GuitBinderGenerator extends AbstractGenerator {
     }
 
     JClassType superclass = presenterType.getSuperclass();
-    if (superclass != null) {
+    if (superclass != null
+        && !superclass.getQualifiedSourceName().equals(Object.class.getCanonicalName())) {
       printPresentersInitilizersCalls(writer, superclass);
     }
   }
@@ -997,17 +1013,54 @@ public class GuitBinderGenerator extends AbstractGenerator {
     // }
   }
 
+  private void checkForRepetition(JClassType presenterType)
+      throws UnableToCompleteException {
+
+    ArrayList<JField> superFields = new ArrayList<JField>();
+    collectAllFields(presenterType.getSuperclass(), superFields);
+    ArrayList<String> superFieldsNames = new ArrayList<String>();
+    for (JField jField : superFields) {
+      superFieldsNames.add(jField.getName());
+    }
+
+    JClassType elementDomType = getType(com.guit.client.dom.Element.class.getCanonicalName());
+
+    for (JField f : presenterType.getFields()) {
+      if (f.isAnnotationPresent(ViewField.class)) {
+
+        // Check for repetided fields
+        if (f.getType().isClassOrInterface().isAssignableTo(elementDomType)) {
+          if (superFieldsNames.contains(f.getName())) {
+            error("The field '" + f.getName() + "' is already declared on a superclass, to fix delete the field. Found: " + presenterType.getQualifiedSourceName());
+          }
+        }
+      }
+    }
+  }
+
   private void printViewFieldBindings(SourceWriter writer, JClassType presenterType,
-      String viewTypeName, HashMap<String, JType> validBindingFieldsType)
+      String viewTypeName, HashMap<String, JType> validBindingFieldsType, ArrayList<JField> fields)
       throws UnableToCompleteException {
 
     Set<String> validBindingFields = validBindingFieldsType.keySet();
 
     JClassType viewAccesorType = getType(ViewAccesor.class.getCanonicalName());
 
-    JField[] fields = presenterType.getFields();
+    ArrayList<JField> superFields = new ArrayList<JField>();
+    collectAllFields(presenterType.getSuperclass(), superFields);
+
+    JClassType elementDomType = getType(com.guit.client.dom.Element.class.getCanonicalName());
+
     for (JField f : fields) {
       if (f.isAnnotationPresent(ViewField.class)) {
+
+        // Check for repetided fields
+        if (f.getType().isClassOrInterface().isAssignableTo(elementDomType)) {
+          if (superFields.contains(f)) {
+
+          }
+        }
+
         String name = f.getName();
         ViewField viewField = f.getAnnotation(ViewField.class);
         String viewName = viewField.name();
