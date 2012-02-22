@@ -12,6 +12,10 @@ public interface GuitDom {
 
   Element element(String tag);
 
+  B b();
+  
+  B b(Element e);
+  
   Head head();
 
   H2 h2();

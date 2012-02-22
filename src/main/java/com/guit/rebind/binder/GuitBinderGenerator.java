@@ -136,6 +136,10 @@ public class GuitBinderGenerator extends AbstractGenerator {
     for (JClassType i : interfaces) {
       findAllMethods(i, methods);
     }
+    JClassType superclass = type.getSuperclass();
+    if (superclass != null) {
+      findAllMethods(superclass, methods);
+    }
   }
 
   @Override
@@ -157,7 +161,7 @@ public class GuitBinderGenerator extends AbstractGenerator {
         presenterType = presenterType.isRawType().getBaseType();
       }
     }
-    
+
     checkForRepetition(presenterType);
 
     // Presenter or controller
@@ -354,7 +358,7 @@ public class GuitBinderGenerator extends AbstractGenerator {
   }
 
   // TODO cache
-  private void collectAllFields(JClassType clazz, ArrayList<JField> list) {
+  public static void collectAllFields(JClassType clazz, ArrayList<JField> list) {
     for (JField jField : clazz.getFields()) {
       list.add(jField);
     }
@@ -637,7 +641,11 @@ public class GuitBinderGenerator extends AbstractGenerator {
     Set<String> validBindingFields = validBindingFieldsTypes.keySet();
 
     JPackage contextEventsPackage = getPackage(presenterType.getPackage().getName() + ".event");
-    for (JMethod m : presenterType.getMethods()) {
+
+    ArrayList<JMethod> methods = new ArrayList<JMethod>();
+    findAllMethods(presenterType, methods);
+
+    for (JMethod m : methods) {
       if (m.isAnnotationPresent(ViewHandler.class)) {
         String name = m.getName();
 
@@ -835,13 +843,13 @@ public class GuitBinderGenerator extends AbstractGenerator {
         // to all
         // handlers. Ex: onClick in ClickHandler, onBlur in BlurHandler
         // ...
-        JMethod[] methods = handlerType.getMethods();
-        if (methods.length != 1) {
+        JMethod[] handlerMethods = handlerType.getMethods();
+        if (handlerMethods.length != 1) {
           error("'%s' has more than one method defined.", handlerType.getName());
         }
 
         // 'onSomething' method
-        JMethod handlerOnMethod = methods[0];
+        JMethod handlerOnMethod = handlerMethods[0];
 
         String methodName = m.getName();
         String handlerTypeName = handlerType.getQualifiedSourceName();
@@ -905,12 +913,6 @@ public class GuitBinderGenerator extends AbstractGenerator {
                       + "));");
             }
           }
-
-          // if (addHandlerToView) {
-          // writer.print("bindings.add(view." + addMethodName + "(" +
-          // eventHandlerWriter.toString()
-          // + "));");
-          // }
         } else if (viewHandlerAnnotation.force()) {
           String addMethodName = "addDomHandler";
           String eventTypeGetter = eventType.getQualifiedSourceName() + ".";
@@ -956,65 +958,9 @@ public class GuitBinderGenerator extends AbstractGenerator {
         }
       }
     }
-
-    // Add elements handlers
-    // for (Entry<JClassType, StringBuilder> entry :
-    // elementsBindings.entrySet()) {
-    // String addMethodName = "view.addDomHandler";
-    // JClassType eventType = entry.getKey();
-    // String eventTypeGetter = eventType.getQualifiedSourceName() + ".";
-    // JField typeField = eventType.getField("TYPE");
-    // if (typeField != null && typeField.isStatic() && typeField.isPublic()) {
-    // eventTypeGetter += "TYPE";
-    // } else {
-    // eventTypeGetter += "getType()";
-    // }
-    //
-    // // Get event handler name
-    // JClassType handlerType = getHandlerForEvent(eventType);
-    // if (handlerType == null) {
-    // error("Parameter '%s' is not an event (subclass of GwtEvent).",
-    // eventType.getName());
-    // }
-    //
-    // // Retrieves the single method (usually 'onSomething') related
-    // // to all
-    // // handlers. Ex: onClick in ClickHandler, onBlur in BlurHandler
-    // // ...
-    // JMethod[] methods = handlerType.getMethods();
-    // if (methods.length != 1) {
-    // error("'%s' has more than one method defined.", handlerType.getName());
-    // }
-    //
-    // // 'onSomething' method
-    // JMethod handlerOnMethod = methods[0];
-    //
-    // String handlerTypeName = handlerType.getQualifiedSourceName();
-    //
-    // writer.println("bindings.add(" + addMethodName + "(");
-    //
-    // // Write handler
-    // writer.println("new " + handlerTypeName + "() {");
-    // writer.indent();
-    // writer.println("public void " + handlerOnMethod.getName() + "(final "
-    // + eventType.getQualifiedSourceName() + " event) {");
-    // writer.indent();
-    //
-    // writer.println(Element.class.getCanonicalName()
-    // + " e = event.getNativeEvent().getEventTarget().cast();");
-    // writer.println(entry.getValue().toString());
-    //
-    // writer.outdent();
-    // writer.println("}");
-    // writer.outdent();
-    // writer.print("}");
-    //
-    // writer.println(", " + eventTypeGetter + "));");
-    // }
   }
 
-  private void checkForRepetition(JClassType presenterType)
-      throws UnableToCompleteException {
+  private void checkForRepetition(JClassType presenterType) throws UnableToCompleteException {
 
     ArrayList<JField> superFields = new ArrayList<JField>();
     collectAllFields(presenterType.getSuperclass(), superFields);
@@ -1023,16 +969,12 @@ public class GuitBinderGenerator extends AbstractGenerator {
       superFieldsNames.add(jField.getName());
     }
 
-    JClassType elementDomType = getType(com.guit.client.dom.Element.class.getCanonicalName());
-
     for (JField f : presenterType.getFields()) {
-      if (f.isAnnotationPresent(ViewField.class)) {
-
-        // Check for repetided fields
-        if (f.getType().isClassOrInterface().isAssignableTo(elementDomType)) {
-          if (superFieldsNames.contains(f.getName())) {
-            error("The field '" + f.getName() + "' is already declared on a superclass, to fix delete the field. Found: " + presenterType.getQualifiedSourceName());
-          }
+      if (f.isAnnotationPresent(ViewField.class) || f.getName().equals("driver")) {
+        if (superFieldsNames.contains(f.getName())) {
+          error("The field '" + f.getName()
+              + "' is already declared on a superclass, to fix delete the field. Found: "
+              + presenterType.getQualifiedSourceName());
         }
       }
     }

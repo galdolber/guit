@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 
 import com.guit.client.ViewProperties;
 import com.guit.client.binder.ViewField;
+import com.guit.rebind.binder.GuitBinderGenerator;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -32,6 +33,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXParseException;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -94,7 +96,8 @@ public class GuitViewHelper {
   public static HashSet<String> getProvidedFields(JClassType baseClass, TreeLogger logger)
       throws UnableToCompleteException {
     HashSet<String> providedFields = new HashSet<String>();
-    JField[] fields = baseClass.getFields();
+    ArrayList<JField> fields = new ArrayList<JField>();
+    GuitBinderGenerator.collectAllFields(baseClass, fields);
     for (JField f : fields) {
       if (f.isAnnotationPresent(ViewField.class)) {
         String name = f.getAnnotation(ViewField.class).name();

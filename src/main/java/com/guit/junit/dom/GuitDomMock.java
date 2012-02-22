@@ -4,6 +4,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 import com.guit.client.dom.A;
 import com.guit.client.dom.Area;
+import com.guit.client.dom.B;
 import com.guit.client.dom.Blockquote;
 import com.guit.client.dom.Body;
 import com.guit.client.dom.Br;
@@ -495,5 +496,15 @@ public class GuitDomMock implements GuitDom {
   @Override
   public Element elementById(String id) {
     return ElementMock.getElementById(id);
+  }
+
+  @Override
+  public B b() {
+    return new BMock();
+  }
+
+  @Override
+  public B b(Element e) {
+    return b().from(e);
   }
 }

@@ -8,6 +8,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 
 import com.guit.client.dom.A;
 import com.guit.client.dom.Area;
+import com.guit.client.dom.B;
 import com.guit.client.dom.Blockquote;
 import com.guit.client.dom.Body;
 import com.guit.client.dom.Br;
@@ -550,5 +551,15 @@ public class GuitDomImpl implements GuitDom {
   @Override
   public Element elementById(String id) {
     return new ElementImpl(Document.get().getElementById(id));
+  }
+
+  @Override
+  public B b() {
+    return new BImpl();
+  }
+
+  @Override
+  public B b(Element e) {
+    return b().from(e);
   }
 }
