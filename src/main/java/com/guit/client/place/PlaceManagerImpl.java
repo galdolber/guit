@@ -229,10 +229,12 @@ public class PlaceManagerImpl implements PlaceManager, ValueChangeHandler<String
           // Restore the token
           History.newItem(getToken(currentPlaceName, currentData), false);
 
-          stayPlace.stay();
+          if (currentPlace instanceof StayPlaceWithCallback) {
+            ((StayPlaceWithCallback<?>) stayPlace).stay();
+          }
           return;
-        } else {
-          stayPlace.leave();
+        } else if (currentPlace instanceof StayPlaceWithCallback) {
+          ((StayPlaceWithCallback<?>) stayPlace).leave();
         }
       }
     } else if (currentPlace != null && currentPlace instanceof LeavePlace) {

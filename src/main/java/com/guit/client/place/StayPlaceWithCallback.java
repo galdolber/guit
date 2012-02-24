@@ -15,7 +15,9 @@
  */
 package com.guit.client.place;
 
-public interface StayPlace<D> extends Place<D> {
+public interface StayPlaceWithCallback<D> extends StayPlace<D> {
 
-  String mayLeave();
+  void stay();
+  
+  void leave();
 }

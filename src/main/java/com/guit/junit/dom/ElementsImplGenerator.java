@@ -1,9 +1,6 @@
 package com.guit.junit.dom;
 
-import com.google.common.io.Files;
-
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -76,12 +73,13 @@ public class ElementsImplGenerator {
           sb.append("  }\n");
         }
         sb.append("}\n");
-        try {
-          Files.write(sb.toString().getBytes(), new File("src/com/guit/client/dom/impl/"
-              + className + "Impl.java"));
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+//        try {
+          // Files.write(sb.toString().getBytes(), new
+          // File("src/com/guit/client/dom/impl/"
+          // + className + "Impl.java"));
+//        } catch (IOException e) {
+//          throw new RuntimeException(e);
+//        }
       }
     }
   }
