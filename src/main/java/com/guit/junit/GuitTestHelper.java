@@ -32,7 +32,7 @@ import com.guit.client.place.PlaceManager;
 
 public class GuitTestHelper implements AppController {
 
-  private static class TestModule extends AbstractModule {
+  public static class TestModule extends AbstractModule {
     @Override
     protected void configure() {
       bind(EventBus.class).to(SimpleEventBus.class).in(Singleton.class);

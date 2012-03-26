@@ -66,26 +66,55 @@ public class ElementMock implements Element {
       DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
       DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
       document =
-          docBuilder.parse(new ByteArrayInputStream(("<html><head></head><body></body></html>")
+          docBuilder.parse(new ByteArrayInputStream(
+              ("<html><head></head><body style='padding:0;margin:0'></body></html>")
               .getBytes()));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+
+    html = new ElementMock(document.getDocumentElement());
+
+    body =
+        new BodyMock().from(new ElementMock((org.w3c.dom.Element) document.getElementsByTagName(
+            "body").item(0)));
+    head =
+        new HeadMock().from(new ElementMock((org.w3c.dom.Element) document.getElementsByTagName(
+            "head").item(0)));
   }
 
+  static BodyMock body;
+  static HeadMock head;
+  static Element html;
+
   public static BodyMock getBody() {
-    return new BodyMock().from(new ElementMock((org.w3c.dom.Element) document.getElementsByTagName(
-        "body").item(0)));
+    return body;
+  }
+
+  public static HeadMock getHead() {
+    return head;
+  }
+
+  public static Element getHtml() {
+    return html;
   }
 
   private org.w3c.dom.Element e;
+
+  public org.w3c.dom.Element getElement() {
+    return e;
+  }
 
   public ElementMock(String tag) {
     this.e = document.createElement(tag);
   }
 
-  private ElementMock(org.w3c.dom.Element e) {
-    this.e = e;
+  public ElementMock(org.w3c.dom.Element e) {
+    if (!e.getOwnerDocument().equals(document)) {
+      this.e = (org.w3c.dom.Element) document.importNode(e, true);
+    } else {
+      this.e = e;
+    }
   }
 
   @Override

@@ -507,4 +507,12 @@ public class GuitDomMock implements GuitDom {
   public B b(Element e) {
     return b().from(e);
   }
+
+  public Head getDocumentHead() {
+    return ElementMock.getHead();
+  }
+
+  public Element getHtml() {
+    return ElementMock.getHtml();
+  }
 }

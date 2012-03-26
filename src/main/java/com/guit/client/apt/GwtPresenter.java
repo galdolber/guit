@@ -22,8 +22,6 @@ public @interface GwtPresenter {
 
   String placeName() default "";
 
-  boolean isWidget() default false;
-
   String title() default "";
   
   Class<? extends Presenter> extendsPresenter() default Presenter.class;

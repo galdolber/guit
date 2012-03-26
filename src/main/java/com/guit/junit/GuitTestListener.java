@@ -26,7 +26,7 @@ import com.google.inject.spi.TypeListener;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 
 import com.guit.client.binder.ViewField;
-import com.guit.client.binder.ViewInitializer;
+import com.guit.client.dom.Element;
 import com.guit.client.junit.Mock;
 
 import java.lang.reflect.Field;
@@ -57,6 +57,9 @@ public class GuitTestListener implements TypeListener {
       for (Field field : rawType.getDeclaredFields()) {
         Class<?> type = field.getType();
         if (field.isAnnotationPresent(ViewField.class)) {
+          if (Element.class.isAssignableFrom(type)) {
+            continue;
+          }
           if (type.isAnnotationPresent(Mock.class)) {
             typeEncounter.register(new MockInjector<I>(field));
           } else {
@@ -83,12 +86,6 @@ public class GuitTestListener implements TypeListener {
             typeEncounter.register(new DriverInjector<I>(field));
           }
         }
-      }
-    }
-
-    for (Method method : methods) {
-      if (method.isAnnotationPresent(ViewInitializer.class)) {
-        typeEncounter.register(new PresenterInitializerInjector<I>(method));
       }
     }
   }

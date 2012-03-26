@@ -8,6 +8,8 @@ public interface GuitDom {
 
   Body getDocumentBody();
 
+  Head getDocumentHead();
+
   Element elementById(String id);
 
   Element element(String tag);

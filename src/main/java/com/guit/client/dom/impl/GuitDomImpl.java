@@ -562,4 +562,9 @@ public class GuitDomImpl implements GuitDom {
   public B b(Element e) {
     return b().from(e);
   }
+
+  @Override
+  public Head getDocumentHead() {
+    return head((Element) Document.get().getElementsByTagName("head").getItem(0));
+  }
 }
