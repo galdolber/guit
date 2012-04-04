@@ -9,4 +9,6 @@ public interface CommandHook {
   void success(Action<Response> action, Response response);
 
   void exception(Action<Response> action, CommandException e);
+
+  void unexpectedException(Throwable throwable);
 }
