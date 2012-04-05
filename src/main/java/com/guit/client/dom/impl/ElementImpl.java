@@ -489,7 +489,8 @@ public class ElementImpl implements Element {
 
   @Override
   public Element insert(Element element, Element beforeElement) {
-    insert(element, children().indexOf(beforeElement));
+    insert(element, children().indexOf(beforeElement)); // Fix bug when wrapping
+                                                        // child element
     return this;
   }
 
