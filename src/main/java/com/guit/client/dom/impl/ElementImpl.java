@@ -1865,8 +1865,6 @@ public class ElementImpl implements Element {
       return true;
     if (obj == null)
       return false;
-    if (getClass() != obj.getClass())
-      return false;
     ElementImpl other = (ElementImpl) obj;
     if (e == null) {
       if (other.e != null)
