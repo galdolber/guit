@@ -1,16 +1,14 @@
 /*
  * Copyright 2010 Gal Dolber.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.guit.server.guice;
@@ -60,7 +58,7 @@ public class GuiceGwtServlet extends RemoteServiceServlet {
 
   @Override
   public String processCall(String payload) {
-    checkPermutationStrongName();
+    // checkPermutationStrongName();
 
     return decodeRequest(payload, null, this);
   }
@@ -149,15 +147,29 @@ public class GuiceGwtServlet extends RemoteServiceServlet {
   public void processGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException, ServletException, SerializationException {
     String requestPayload = readContent(request);
-    onBeforeRequestDeserialized(requestPayload);
-    // Direct call to avoid xs check
-    String responsePayload = decodeRequest(requestPayload, null, this);
-    onAfterResponseSerialized(responsePayload);
+    String responsePayload = processRequest(requestPayload);
+
     String callback = request.getParameter("callback");
     if (callback != null) {
       responsePayload = callback + "(" + quote(responsePayload) + ");";
     }
     writeResponse(request, response, responsePayload);
+  }
+
+  public void setRequest(HttpServletRequest request) {
+    synchronized (this) {
+      validateThreadLocalData();
+      perThreadRequest.set(request);
+      // perThreadResponse.set(response);
+    }
+  }
+
+  public String processRequest(String requestPayload) {
+    onBeforeRequestDeserialized(requestPayload);
+    // Direct call to avoid xs check
+    String responsePayload = decodeRequest(requestPayload, null, this);
+    onAfterResponseSerialized(responsePayload);
+    return responsePayload;
   }
 
   private void validateThreadLocalData() {
@@ -188,10 +200,9 @@ public class GuiceGwtServlet extends RemoteServiceServlet {
   }
 
   /**
-   * Produce a string in double quotes with backslash sequences in all the right
-   * places. A backslash will be inserted within </, allowing JSON text to be
-   * delivered in HTML. In JSON text, a string cannot contain a control
-   * character or an unescaped quote or backslash.
+   * Produce a string in double quotes with backslash sequences in all the right places. A backslash
+   * will be inserted within </, allowing JSON text to be delivered in HTML. In JSON text, a string
+   * cannot contain a control character or an unescaped quote or backslash.
    * 
    * @param string A String
    * @return A String correctly formatted for insertion in a JSON text.
