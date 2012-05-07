@@ -25,8 +25,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class RpcProcessor implements SerializationPolicyProvider {
 
@@ -38,8 +36,7 @@ public class RpcProcessor implements SerializationPolicyProvider {
   @StaticFilesPath
   String staticFilesPath;
 
-  private final Map<String, SerializationPolicy> serializationPolicyCache =
-      new HashMap<String, SerializationPolicy>();
+  private SerializationPolicy serializationPolicyCache;
 
   @Inject
   public RpcProcessor(CommandRpcImpl service) {
@@ -52,18 +49,24 @@ public class RpcProcessor implements SerializationPolicyProvider {
     }
   }
 
-  public String processRequest(String requestPayload) {
-    return decodeRequest(requestPayload, null, this);
+  public String encodeResponse(Object data) {
+    if (serializationPolicyCache == null) {
+      throw new RuntimeException("Cannot push on the first request");
+    }
+    try {
+      return "//OK" + encodeResponse(data.getClass(), data, 1, serializationPolicyCache);
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
-  public String decodeRequest(String encodedRequest, Class<?> type,
-      SerializationPolicyProvider serializationPolicyProvider) {
+  public String processRequest(String encodedRequest) {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
     Method method = execute;
     try {
       ServerSerializationStreamReader streamReader =
-          new ServerSerializationStreamReader(classLoader, serializationPolicyProvider);
+          new ServerSerializationStreamReader(classLoader, this);
       streamReader.prepareToRead(encodedRequest);
 
       SerializationPolicy serializationPolicy = streamReader.getSerializationPolicy();
@@ -89,8 +92,9 @@ public class RpcProcessor implements SerializationPolicyProvider {
 
       int flags = streamReader.getFlags();
       try {
-        return encodeResponse(method.getReturnType(), method.invoke(service, parameterValues),
-            false, flags, serializationPolicy);
+        return "//OK"
+            + encodeResponse(method.getReturnType(), method.invoke(service, parameterValues),
+                flags, serializationPolicy);
       } catch (InvocationTargetException e) {
         Throwable cause = e.getCause();
         if (!(cause instanceof CommandException)) {
@@ -98,15 +102,15 @@ public class RpcProcessor implements SerializationPolicyProvider {
               + cause.toString(), cause);
         }
 
-        return encodeResponse(cause.getClass(), cause, true, flags, serializationPolicy);
+        return "//EX" + encodeResponse(cause.getClass(), cause, flags, serializationPolicy);
       }
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
   }
 
-  protected String encodeResponse(Class<?> responseClass, Object object, boolean wasThrown,
-      int flags, SerializationPolicy serializationPolicy) throws SerializationException {
+  protected String encodeResponse(Class<?> responseClass, Object object, int flags,
+      SerializationPolicy serializationPolicy) throws SerializationException {
 
     ServerSerializationStreamWriter stream =
         new ServerSerializationStreamWriter(serializationPolicy);
@@ -115,20 +119,18 @@ public class RpcProcessor implements SerializationPolicyProvider {
     stream.prepareToWrite();
     stream.serializeValue(object, responseClass);
 
-    return (wasThrown ? "//EX" : "//OK") + stream.toString();
+    return stream.toString();
   }
 
   public final SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
-
-    SerializationPolicy serializationPolicy =
-        getCachedSerializationPolicy(moduleBaseURL, strongName);
-    if (serializationPolicy != null) {
-      return serializationPolicy;
+    if (serializationPolicyCache != null) {
+      return serializationPolicyCache;
     }
 
-    serializationPolicy = doGetSerializationPolicy(moduleBaseURL, strongName);
+    serializationPolicyCache =
+        loadSerializationPolicy(this, moduleBaseURL, strongName, staticFilesPath);
 
-    if (serializationPolicy == null) {
+    if (serializationPolicyCache == null) {
       // Failed to get the requested serialization policy; use the default
       System.out
           .println("WARNING: Failed to get the SerializationPolicy '"
@@ -136,31 +138,10 @@ public class RpcProcessor implements SerializationPolicyProvider {
               + "' for module '"
               + moduleBaseURL
               + "'; a legacy, 1.3.3 compatible, serialization policy will be used.  You may experience SerializationExceptions as a result.");
-      serializationPolicy = RPC.getDefaultSerializationPolicy();
+      serializationPolicyCache = RPC.getDefaultSerializationPolicy();
     }
 
-    // This could cache null or an actual instance. Either way we will not
-    // attempt to lookup the policy again.
-    putCachedSerializationPolicy(moduleBaseURL, strongName, serializationPolicy);
-
-    return serializationPolicy;
-  }
-
-  private SerializationPolicy getCachedSerializationPolicy(String moduleBaseURL, String strongName) {
-    synchronized (serializationPolicyCache) {
-      return serializationPolicyCache.get(moduleBaseURL + strongName);
-    }
-  }
-
-  private void putCachedSerializationPolicy(String moduleBaseURL, String strongName,
-      SerializationPolicy serializationPolicy) {
-    synchronized (serializationPolicyCache) {
-      serializationPolicyCache.put(moduleBaseURL + strongName, serializationPolicy);
-    }
-  }
-
-  protected SerializationPolicy doGetSerializationPolicy(String moduleBaseURL, String strongName) {
-    return loadSerializationPolicy(this, moduleBaseURL, strongName, staticFilesPath);
+    return serializationPolicyCache;
   }
 
   static SerializationPolicy loadSerializationPolicy(RpcProcessor servlet, String moduleBaseURL,

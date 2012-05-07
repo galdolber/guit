@@ -15,7 +15,10 @@ package com.guit.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
+import com.google.gwt.rpc.client.impl.RemoteException;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
@@ -29,6 +32,8 @@ import com.guit.rpc.websocket.ErrorHandler;
 import com.guit.rpc.websocket.MessageEvent;
 import com.guit.rpc.websocket.MessageHandler;
 import com.guit.rpc.websocket.OpenHandler;
+import com.guit.rpc.websocket.ServerPushData;
+import com.guit.rpc.websocket.ServerPushEvent;
 import com.guit.rpc.websocket.WebSocket;
 import com.guit.rpc.websocket.WebSocketsException;
 
@@ -37,29 +42,30 @@ import java.util.Map.Entry;
 
 public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
 
-  private static WebSocket webSocket = WebSocket.create("ws://" + getBaseUrl() + "websocket");
+  private WebSocket webSocket = WebSocket.create("ws://" + getBaseUrl() + "websocket");
 
-  private static OpenHandler openHandler = new OpenHandler() {
+  private OpenHandler openHandler = new OpenHandler() {
     @Override
     public void onOpen(WebSocket webSocket) {
-      GWT.log("Web socket connected");
+      // TODO Event
+      GWT.log("Web socket opened");
 
       for (Entry<String, RequestCallbackAdapter<?>> e : beforeConnected.entrySet()) {
         sendRequest(e.getKey(), e.getValue());
       }
     }
   };
-  private static CloseHandler closeHandler = new CloseHandler() {
+  private CloseHandler closeHandler = new CloseHandler() {
     @Override
     public void onClose(WebSocket webSocket) {
+      // TODO Event
       GWT.log("Web socket closed");
     }
   };
-  private static MessageHandler messageHandler = new MessageHandler() {
+  private MessageHandler messageHandler = new MessageHandler() {
     @Override
     public void onMessage(WebSocket webSocket, MessageEvent event) {
       String data = event.getData();
-      GWT.log("Message " + data);
       if (data.startsWith("RPC")) {
         data = data.substring(3);
         int index = data.indexOf("_");
@@ -67,22 +73,28 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
         data = data.substring(index + 1);
         requestCallbacks.get(requestNumber).onResponseReceived(null, new GuitRequest(data));
         requestCallbacks.remove(requestNumber);
+      } else {
+        try {
+          GuitEntryPoint.getEventBus().fireEvent(
+              new ServerPushEvent(((ServerPushData) createStreamReader(data).readObject())
+                  .getData()));
+        } catch (RemoteException e) {
+          throw new RuntimeException(e.getCause());
+        } catch (SerializationException e) {
+          throw new IncompatibleRemoteServiceException("The response could not be deserialized", e);
+        } catch (Throwable e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   };
-  private static ErrorHandler errorHandler = new ErrorHandler() {
+  private ErrorHandler errorHandler = new ErrorHandler() {
     @Override
     public void onError(WebSocket webSocket) {
-      GWT.log("Error");
+      GWT.log("Web socket error");
       GuitEntryPoint.getEventBus().fireEvent(new AsyncExceptionEvent(new WebSocketsException()));
     }
   };
-  static {
-    webSocket.setOnOpen(openHandler);
-    webSocket.setOnClose(closeHandler);
-    webSocket.setOnMessage(messageHandler);
-    webSocket.setOnError(errorHandler);
-  }
 
   /**
    * Name of the URL parameter that holds the RPC request payload.
@@ -107,6 +119,11 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
   protected WebSocketRemoteServiceProxy(String moduleBaseURL, String remoteServiceRelativePath,
       String serializationPolicyName, Serializer serializer) {
     super(moduleBaseURL, remoteServiceRelativePath, serializationPolicyName, serializer);
+
+    webSocket.setOnOpen(openHandler);
+    webSocket.setOnClose(closeHandler);
+    webSocket.setOnMessage(messageHandler);
+    webSocket.setOnError(errorHandler);
   }
 
   private static String getBaseUrl() {
@@ -126,7 +143,7 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
   protected <T> Request doInvoke(final ResponseReader responseReader, final String methodName,
       final RpcStatsContext statsContext, String requestData, final AsyncCallback<T> callback) {
 
-    requestData = "RPC" + requestNumber + "_" + requestData;
+    requestData = requestNumber + "_" + requestData;
     RequestCallbackAdapter<T> requestCallbackAdapter =
         new RequestCallbackAdapter<T>(this, methodName, statsContext, callback, responseReader);
     if (webSocket.getReadyState() == WebSocket.OPEN) {
@@ -138,7 +155,7 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
     return null;
   }
 
-  private static <T> void sendRequest(String data, RequestCallbackAdapter<T> callback) {
+  private <T> void sendRequest(String data, RequestCallbackAdapter<T> callback) {
     requestCallbacks.put(requestNumber, callback);
     requestNumber++;
     webSocket.send(data);
