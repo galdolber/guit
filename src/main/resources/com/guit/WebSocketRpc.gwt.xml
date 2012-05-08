@@ -7,5 +7,8 @@
 		<when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
 	</generate-with>
 	
+	<extend-configuration-property name="app.controller"
+		value="com.guit.rpc.websocket.WebSocketManager" />
+	
 	<source path="rpc"></source>
 </module>

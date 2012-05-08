@@ -27,41 +27,21 @@ import com.google.gwt.user.client.rpc.impl.Serializer;
 
 import com.guit.client.GuitEntryPoint;
 import com.guit.client.async.event.AsyncExceptionEvent;
-import com.guit.rpc.websocket.CloseHandler;
 import com.guit.rpc.websocket.ErrorHandler;
 import com.guit.rpc.websocket.MessageEvent;
 import com.guit.rpc.websocket.MessageHandler;
-import com.guit.rpc.websocket.OpenHandler;
 import com.guit.rpc.websocket.ServerPushData;
 import com.guit.rpc.websocket.ServerPushEvent;
 import com.guit.rpc.websocket.WebSocket;
+import com.guit.rpc.websocket.WebSocketManager;
 import com.guit.rpc.websocket.WebSocketsException;
 
 import java.util.HashMap;
-import java.util.Map.Entry;
 
 public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
 
-  private WebSocket webSocket = WebSocket.create("ws://" + getBaseUrl() + "websocket");
+  private WebSocketManager webSocketManager = WebSocketManager.get();
 
-  private OpenHandler openHandler = new OpenHandler() {
-    @Override
-    public void onOpen(WebSocket webSocket) {
-      // TODO Event
-      GWT.log("Web socket opened");
-
-      for (Entry<String, RequestCallbackAdapter<?>> e : beforeConnected.entrySet()) {
-        sendRequest(e.getKey(), e.getValue());
-      }
-    }
-  };
-  private CloseHandler closeHandler = new CloseHandler() {
-    @Override
-    public void onClose(WebSocket webSocket) {
-      // TODO Event
-      GWT.log("Web socket closed");
-    }
-  };
   private MessageHandler messageHandler = new MessageHandler() {
     @Override
     public void onMessage(WebSocket webSocket, MessageEvent event) {
@@ -91,7 +71,7 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
   private ErrorHandler errorHandler = new ErrorHandler() {
     @Override
     public void onError(WebSocket webSocket) {
-      GWT.log("Web socket error");
+      GWT.log("WebSocket Exception");
       GuitEntryPoint.getEventBus().fireEvent(new AsyncExceptionEvent(new WebSocketsException()));
     }
   };
@@ -112,28 +92,14 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
   public static final String JSON_PARAM_RESPONSE_PAYLOAD = "rpcResult";
   private static HashMap<Long, RequestCallbackAdapter<?>> requestCallbacks =
       new HashMap<Long, RequestCallbackAdapter<?>>();
-  private static HashMap<String, RequestCallbackAdapter<?>> beforeConnected =
-      new HashMap<String, RequestCallbackAdapter<?>>();
   private static long requestNumber = 0;
 
   protected WebSocketRemoteServiceProxy(String moduleBaseURL, String remoteServiceRelativePath,
       String serializationPolicyName, Serializer serializer) {
     super(moduleBaseURL, remoteServiceRelativePath, serializationPolicyName, serializer);
 
-    webSocket.setOnOpen(openHandler);
-    webSocket.setOnClose(closeHandler);
-    webSocket.setOnMessage(messageHandler);
-    webSocket.setOnError(errorHandler);
-  }
-
-  private static String getBaseUrl() {
-    String s = GWT.getHostPageBaseURL();
-    if (s.startsWith("http://")) {
-      s = s.substring(7);
-    } else if (s.startsWith("https://")) {
-      s = s.substring(8);
-    }
-    return s;
+    webSocketManager.setOnMessage(messageHandler);
+    webSocketManager.setOnError(errorHandler);
   }
 
   /**
@@ -146,10 +112,10 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
     requestData = requestNumber + "_" + requestData;
     RequestCallbackAdapter<T> requestCallbackAdapter =
         new RequestCallbackAdapter<T>(this, methodName, statsContext, callback, responseReader);
-    if (webSocket.getReadyState() == WebSocket.OPEN) {
+    if (webSocketManager.getReadyState() == WebSocket.OPEN) {
       sendRequest(requestData, requestCallbackAdapter);
     } else {
-      beforeConnected.put(requestData, requestCallbackAdapter);
+      throw new RuntimeException("The connection is not opened. Listen for ConnectionOpenEvent");
     }
 
     return null;
@@ -158,6 +124,6 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
   private <T> void sendRequest(String data, RequestCallbackAdapter<T> callback) {
     requestCallbacks.put(requestNumber, callback);
     requestNumber++;
-    webSocket.send(data);
+    webSocketManager.send(data);
   }
 }
