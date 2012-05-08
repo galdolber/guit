@@ -6,7 +6,7 @@ I'm migrating guit from google code, where there are a lot of old and ugly docs.
 
 ### Components
 
- * Command Service: easy server-client communication with autobaching, caching, server preprocessors and more
+ * Command Service: easy server-client communication with autobaching, caching, server preprocessors, post/get/xs/websockets implementations and more
  * Place Manager: history management with automatic serialization, runasync and more
  * Guit Binder: mvp pattern implemented in a uibinder fashion with a testable dom abstraction, a plugin system, multi device support and more
  * Displays framework: an easy way to manage your screen containers

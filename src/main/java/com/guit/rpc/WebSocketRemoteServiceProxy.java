@@ -112,18 +112,14 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
     requestData = requestNumber + "_" + requestData;
     RequestCallbackAdapter<T> requestCallbackAdapter =
         new RequestCallbackAdapter<T>(this, methodName, statsContext, callback, responseReader);
-    if (webSocketManager.getReadyState() == WebSocket.OPEN) {
-      sendRequest(requestData, requestCallbackAdapter);
-    } else {
-      throw new RuntimeException("The connection is not opened. Listen for ConnectionOpenEvent");
+
+    requestCallbacks.put(requestNumber, requestCallbackAdapter);
+    requestNumber++;
+    if (requestNumber > 100) {
+      requestNumber = 0L;
     }
+    webSocketManager.send(requestData);
 
     return null;
-  }
-
-  private <T> void sendRequest(String data, RequestCallbackAdapter<T> callback) {
-    requestCallbacks.put(requestNumber, callback);
-    requestNumber++;
-    webSocketManager.send(data);
   }
 }
