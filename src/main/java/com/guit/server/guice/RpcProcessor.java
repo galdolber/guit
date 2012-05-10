@@ -10,6 +10,7 @@ import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriter;
 import com.google.inject.Inject;
 
+import com.guit.client.command.CommandRpc;
 import com.guit.client.command.action.Action;
 import com.guit.client.command.action.CommandException;
 import com.guit.server.command.CommandRpcImpl;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 
 public class RpcProcessor implements SerializationPolicyProvider {
 
-  CommandRpcImpl service;
   private final Method execute;
   private Method executeBatch;
 
@@ -39,8 +39,7 @@ public class RpcProcessor implements SerializationPolicyProvider {
   private SerializationPolicy serializationPolicyCache;
 
   @Inject
-  public RpcProcessor(CommandRpcImpl service) {
-    this.service = service;
+  public RpcProcessor() {
     try {
       this.execute = CommandRpcImpl.class.getMethod("execute", Action.class);
       this.executeBatch = CommandRpcImpl.class.getMethod("executeBatch", ArrayList.class);
@@ -54,13 +53,14 @@ public class RpcProcessor implements SerializationPolicyProvider {
       throw new RuntimeException("Cannot push on the first request");
     }
     try {
-      return "//OK" + encodeResponse(data.getClass(), data, 1, serializationPolicyCache);
+      return (data instanceof Exception ? "//EX" : "//OK")
+          + encodeResponse(data.getClass(), data, 1, serializationPolicyCache);
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
   }
 
-  public String processRequest(String encodedRequest) {
+  public String processRequest(String encodedRequest, CommandRpc service) {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
     Method method = execute;
