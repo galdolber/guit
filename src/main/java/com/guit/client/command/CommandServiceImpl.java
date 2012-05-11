@@ -18,6 +18,7 @@ package com.guit.client.command;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.logging.client.LogConfiguration;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 
@@ -28,11 +29,13 @@ import com.guit.client.command.action.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.logging.Logger;
 
 public class CommandServiceImpl implements CommandService, ScheduledCommand {
 
   private final EventBus eventBus;
   private final CommandRpcAsync service;
+  private final Logger logger = Logger.getLogger("CommandServiceImpl");
 
   private HashMap<Action<Response>, ArrayList<AsyncCallback<Response>>> actionsMap =
       new LinkedHashMap<Action<Response>, ArrayList<AsyncCallback<Response>>>();
@@ -74,6 +77,10 @@ public class CommandServiceImpl implements CommandService, ScheduledCommand {
     }
     callbacks.add((AsyncCallback<Response>) callback);
     actionsMap.put((Action<Response>) action, callbacks);
+
+    if (LogConfiguration.loggingIsEnabled()) {
+      logger.info(actionsMap.size() + " actions in queue");
+    }
   }
 
   @Override
@@ -128,13 +135,19 @@ public class CommandServiceImpl implements CommandService, ScheduledCommand {
   @Override
   public void execute() {
     schedulerActive = false;
+    if (LogConfiguration.loggingIsEnabled()) {
+      logger.info("Execute " + actionsMap.size() + " actions");
+    }
     if (!actionsMap.isEmpty()) {
-      if (actionsMap.size() == 1) {
-        getSingleRequestUnit().execute(actionsMap);
-      } else {
-        getBatchRequestUnit().execute(actionsMap);
-      }
+      HashMap<Action<Response>, ArrayList<AsyncCallback<Response>>> copy =
+          new HashMap<Action<Response>, ArrayList<AsyncCallback<Response>>>();
+      copy.putAll(actionsMap);
       actionsMap = new HashMap<Action<Response>, ArrayList<AsyncCallback<Response>>>();
+      if (actionsMap.size() == 1) {
+        getSingleRequestUnit().execute(copy);
+      } else {
+        getBatchRequestUnit().execute(copy);
+      }
     }
   }
 }
