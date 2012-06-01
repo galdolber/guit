@@ -75,7 +75,7 @@ public class CommandBatchRequestUnit extends AbstractCommandRequestUnit implemen
         }
 
         // Remove action and callback from the request
-        actionsMap.remove(action);
+        // actionsMap.remove(action);
         iterator.remove();
       }
     }
