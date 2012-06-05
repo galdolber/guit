@@ -357,7 +357,7 @@ public class ElementImpl implements Element {
 
   @Override
   public Element setClassName(String className) {
-    e.addClassName(className);
+    e.setClassName(className);
     return this;
   }
 
