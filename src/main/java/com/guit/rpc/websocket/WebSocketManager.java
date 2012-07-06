@@ -31,14 +31,6 @@ public class WebSocketManager {
     @Override
     public void onClose(WebSocket webSocket) {
       GuitEntryPoint.getEventBus().fireEvent(new ConnectionCloseEvent());
-
-      reconnectTimer = new Timer() {
-        @Override
-        public void run() {
-          init();
-        }
-      };
-      reconnectTimer.scheduleRepeating(5000);
     }
   };
 
@@ -46,11 +38,11 @@ public class WebSocketManager {
   private MessageHandler messageHandler;
 
   public WebSocketManager() {
-    init();
+    connect();
     INSTANCE = this;
   }
 
-  private void init() {
+  public void connect() {
     webSocket = WebSocket.create("ws://" + getBaseUrl() + "websocket");
     webSocket.setOnOpen(openHandler);
     webSocket.setOnClose(closeHandler);
