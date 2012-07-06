@@ -18,23 +18,21 @@ package com.guit.rebind.common;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.GeneratorContext;
-import com.google.gwt.core.ext.GeneratorContextExt;
-import com.google.gwt.core.ext.GeneratorExt;
+import com.google.gwt.core.ext.IncrementalGenerator;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.rebind.RebindResult;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
-import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
 
-public abstract class AbstractGeneratorExt extends GeneratorExt {
+public abstract class AbstractGeneratorExt extends IncrementalGenerator {
 
   protected TreeLogger logger;
   protected GeneratorContext context;
@@ -48,6 +46,10 @@ public abstract class AbstractGeneratorExt extends GeneratorExt {
   protected String typeName;
   protected String createdClassName;
   protected String implementationPostfix = "Impl";
+
+  protected String getCreatedClassName() {
+    return generatedPackage + "." + implName;
+  }
 
   protected ClassSourceFileComposerFactory createComposer() throws UnableToCompleteException {
     return new ClassSourceFileComposerFactory(generatedPackage, implName);
@@ -86,10 +88,16 @@ public abstract class AbstractGeneratorExt extends GeneratorExt {
     }
   }
 
-  protected abstract RebindResult generate(SourceWriter writer) throws UnableToCompleteException;
+  protected boolean checkAlreadyGenerated(String clazz) {
+    int i = clazz.lastIndexOf(".");
+    return typeOracle.findType(clazz.substring(0, i), clazz.substring(i + 1)) != null;
+  }
+
+  protected abstract RebindResult generate()
+      throws UnableToCompleteException;
 
   @Override
-  public RebindResult generateIncrementally(TreeLogger logger, GeneratorContextExt context,
+  public RebindResult generateIncrementally(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
     saveVariables(logger, context, typeName);
 
@@ -101,20 +109,9 @@ public abstract class AbstractGeneratorExt extends GeneratorExt {
     if (enclosingType != null) {
       implName = enclosingType.getSimpleSourceName() + implName;
     }
+    createdClassName = getCreatedClassName();
 
-    ClassSourceFileComposerFactory composer = createComposer();
-    processComposer(composer);
-    createdClassName = composer.getCreatedClassName();
-    PrintWriter printWriter = createPrintWriter();
-    RebindResult rebindResult = null;
-    if (printWriter != null) {
-      SourceWriter writer = composer.createSourceWriter(context, printWriter);
-      rebindResult = generate(writer);
-      writer.commit(logger);
-    }
-
-    return new RebindResult(rebindResult.getResultStatus(), composer.getCreatedClassName(),
-        rebindResult.getClientDataMap());
+    return generate();
   }
 
   protected String processImplName(String implName) {
@@ -153,7 +150,7 @@ public abstract class AbstractGeneratorExt extends GeneratorExt {
 
   protected void saveVariables(TreeLogger logger, GeneratorContext context, String typeName) {
     this.logger = logger;
-    this.context = context;
+    this.context = (GeneratorContext) context;
     this.typeName = typeName;
 
     typeOracle = context.getTypeOracle();

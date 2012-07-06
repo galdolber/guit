@@ -32,6 +32,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXParseException;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -247,6 +248,19 @@ public class GuitViewHelper {
     String templatePath = packagePath + "/" + resourceName;
     url = UiBinderGenerator.class.getClassLoader().getResource(templatePath);
     return url;
+  }
+
+  public static long lastMofified(JClassType baseClass, String resourceName) {
+    URL url = null;
+
+    String packagePath = slashify(baseClass.getPackage().getName());
+    String templatePath = packagePath + "/" + resourceName;
+    url = UiBinderGenerator.class.getClassLoader().getResource(templatePath);
+    try {
+      return new File(url.toURI()).lastModified();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static String findGwtDomElementTypeForTag(String tag, TypeOracle oracle) {

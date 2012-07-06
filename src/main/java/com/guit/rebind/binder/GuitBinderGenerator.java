@@ -16,6 +16,9 @@
 package com.guit.rebind.binder;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.ext.CachedGeneratorResult;
+import com.google.gwt.core.ext.RebindMode;
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -24,8 +27,10 @@ import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
+import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
+import com.google.gwt.dev.javac.typemodel.JRawType;
 import com.google.gwt.event.dom.client.HasNativeEvent;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.EventHandler;
@@ -58,12 +63,13 @@ import com.guit.client.binder.ViewPool;
 import com.guit.client.dom.Event;
 import com.guit.client.dom.impl.ElementImpl;
 import com.guit.client.dom.impl.EventImpl;
-import com.guit.rebind.common.AbstractGenerator;
+import com.guit.rebind.common.AbstractGeneratorExt;
 import com.guit.rebind.gin.GinOracle;
 import com.guit.rebind.guitview.GuitViewField;
 import com.guit.rebind.guitview.GuitViewGenerator;
 import com.guit.rebind.guitview.GuitViewHelper;
 
+import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -73,8 +79,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
-public class GuitBinderGenerator extends AbstractGenerator {
+public class GuitBinderGenerator extends AbstractGeneratorExt {
 
+  private static final String GUIT_INFO = "guit-info";
   private static Method getAnnotationsMethod;
   private final GuitViewGenerator guitViewGenerator = new GuitViewGenerator();
   private static final String STRINGCANONICALNAME = String.class.getCanonicalName();
@@ -142,15 +149,34 @@ public class GuitBinderGenerator extends AbstractGenerator {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  protected void generate(SourceWriter writer) throws UnableToCompleteException {
-    hasNativeEventType =
-        hasNativeEventType == null ? getType(HasNativeEvent.class.getCanonicalName())
-            : hasNativeEventType;
+  protected RebindResult generate() throws UnableToCompleteException {
+    if (checkAlreadyGenerated(createdClassName)) {
+      return new RebindResult(RebindMode.USE_ALL_CACHED, createdClassName);
+    }
 
     // Do we need to check this?
     JClassType presenterType =
         baseClass.getImplementedInterfaces()[0].isParameterized().getTypeArgs()[0];
+
+    // Presenter or controller
+    boolean isPresenter = checkIsPresenter(presenterType);
+
+    CachedGeneratorResult cachedGeneratorResult = context.getCachedGeneratorResult();
+    if (cachedGeneratorResult != null) {
+      Object clientData = cachedGeneratorResult.getClientData(GUIT_INFO);
+      if (clientData != null) {
+        HashMap<String, Object> lastBindingData = (HashMap<String, Object>) clientData;
+        if (lastBindingData.equals(makeUnitData(presenterType, isPresenter))) {
+          return new RebindResult(RebindMode.USE_ALL_CACHED, createdClassName);
+        }
+      }
+    }
+
+    hasNativeEventType =
+        hasNativeEventType == null ? getType(HasNativeEvent.class.getCanonicalName())
+            : hasNativeEventType;
 
     // If it is a parameterized type we need to find the base type to get
     // the right method names
@@ -164,9 +190,15 @@ public class GuitBinderGenerator extends AbstractGenerator {
 
     checkForRepetition(presenterType);
 
-    // Presenter or controller
-    boolean isPresenter = checkIsPresenter(presenterType);
+    ClassSourceFileComposerFactory composer = createComposer();
+    processComposer(composer);
+    composer.getCreatedClassName();
+    PrintWriter printWriter = createPrintWriter();
+    if (printWriter == null) {
+      return new RebindResult(RebindMode.USE_ALL_CACHED, createdClassName);
+    }
 
+    SourceWriter writer = composer.createSourceWriter(context, printWriter);
     writer.println(bindingsDeclaration);
     writer.println(eventBusbindingsDeclaration);
 
@@ -324,6 +356,37 @@ public class GuitBinderGenerator extends AbstractGenerator {
     writer.println("eventBus = null;");
     writer.outdent();
     writer.println("}");
+    writer.commit(logger);
+
+    if (context.isGeneratorResultCachingEnabled()) {
+      RebindResult result = new RebindResult(RebindMode.USE_ALL_NEW, createdClassName);
+      result.putClientData(GUIT_INFO, makeUnitData(presenterType, isPresenter));
+      return result;
+    } else {
+      return new RebindResult(RebindMode.USE_ALL_NEW_WITH_NO_CACHING, createdClassName);
+    }
+  }
+
+  private HashMap<String, Object> makeUnitData(JClassType presenterType, boolean isPresenter) {
+    HashMap<String, Object> data = new HashMap<String, Object>();
+    data.put("presenter", getModificationTime(presenterType));
+    if (isPresenter) {
+      data.put("view.ui.xml", GuitViewHelper.lastMofified(presenterType, "view/"
+          + presenterType.getSimpleSourceName() + ".ui.xml"));
+    }
+    return data;
+  }
+
+  private Object getModificationTime(JClassType type) {
+    if( type instanceof JRealClassType){
+    JRealClassType sourceRealType = (JRealClassType) type;
+    return sourceRealType.getLastModifiedTime();
+    }else if (type instanceof JRawType) {
+      JRawType r = (JRawType) type;
+      return r.getBaseType().getLastModifiedTime();
+    } else {
+      throw new RuntimeException(type.getQualifiedSourceName() + " " + type.getClass().getCanonicalName());
+    }
   }
 
   private void printProvidedFields(JClassType baseClass,
@@ -1186,5 +1249,10 @@ public class GuitBinderGenerator extends AbstractGenerator {
     if (returnTypePrimitive == null || !returnTypePrimitive.equals(JPrimitiveType.VOID)) {
       error("All event handlers should return void. Found: %s.%s", presenterName, name);
     }
+  }
+
+  @Override
+  public long getVersionId() {
+    return 1L;
   }
 }
