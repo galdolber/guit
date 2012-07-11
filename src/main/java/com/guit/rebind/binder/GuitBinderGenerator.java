@@ -1,16 +1,14 @@
 /*
  * Copyright 2010 Gal Dolber.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.guit.rebind.binder;
@@ -31,6 +29,7 @@ import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
 import com.google.gwt.dev.javac.typemodel.JRawType;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasNativeEvent;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.EventHandler;
@@ -51,6 +50,7 @@ import com.guit.client.Implementation;
 import com.guit.client.ImplicitCast;
 import com.guit.client.Presenter;
 import com.guit.client.View;
+import com.guit.client.apt.GwtPresenter;
 import com.guit.client.binder.Attribute;
 import com.guit.client.binder.ContributorAnnotation;
 import com.guit.client.binder.EventBusHandler;
@@ -78,6 +78,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
+
+import elemental.events.EventListener;
 
 public class GuitBinderGenerator extends AbstractGeneratorExt {
 
@@ -378,14 +380,15 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
   }
 
   private Object getModificationTime(JClassType type) {
-    if( type instanceof JRealClassType){
-    JRealClassType sourceRealType = (JRealClassType) type;
-    return sourceRealType.getLastModifiedTime();
-    }else if (type instanceof JRawType) {
+    if (type instanceof JRealClassType) {
+      JRealClassType sourceRealType = (JRealClassType) type;
+      return sourceRealType.getLastModifiedTime();
+    } else if (type instanceof JRawType) {
       JRawType r = (JRawType) type;
       return r.getBaseType().getLastModifiedTime();
     } else {
-      throw new RuntimeException(type.getQualifiedSourceName() + " " + type.getClass().getCanonicalName());
+      throw new RuntimeException(type.getQualifiedSourceName() + " "
+          + type.getClass().getCanonicalName());
     }
   }
 
@@ -432,9 +435,8 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
   }
 
   /**
-   * Find event in dom, shared or context locations. Context =
-   * '{currentPackage}/event'. Context events have priority over shared and dom
-   * ones.
+   * Find event in dom, shared or context locations. Context = '{currentPackage}/event'. Context
+   * events have priority over shared and dom ones.
    */
   protected JClassType getEventByName(String eventName, JPackage contextEventsPackage) {
     // Get event class name
@@ -809,6 +811,7 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
             widgetCount++;
           }
         }
+
         if (widgetCount != bindingFields.size() && widgetCount != 0) {
           error(
               "Not all fields on the class %s.%s are either all elements or all widgets. You cannot bind elements and widgets on the same handler",
@@ -817,13 +820,11 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
         fieldsAreElements = widgetCount == 0;
 
         /**
-         * Find parameters bindings. The binding can be with the event(cannot
-         * have anidation of getters):'getter'->'getGetter()' or with the
-         * view:'$getter'->'view.getGetter()' or with a view field
-         * '{viewField$getter}'->'view.viewField.getGetter();', this last two
-         * ones will support anidation:
-         * '{viewField$getter$another}'->'view.viewField.getGetter().getAnother
-         * ( ) ; '
+         * Find parameters bindings. The binding can be with the event(cannot have anidation of
+         * getters):'getter'->'getGetter()' or with the view:'$getter'->'view.getGetter()' or with a
+         * view field '{viewField$getter}'->'view.viewField.getGetter();', this last two ones will
+         * support anidation: '{viewField$getter$another}'->'view.viewField.getGetter().getAnother (
+         * ) ; '
          **/
         StringBuilder bindingParameters = new StringBuilder();
         JParameter[] parameters = m.getParameters();
@@ -851,7 +852,9 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
             getter = "is";
           }
 
-          if (p.isAnnotationPresent(Attribute.class)) {
+          if (p.getName().equals("event")) {
+            bindingParameters.append("event");
+          } else if (p.isAnnotationPresent(Attribute.class)) {
             // Only valid for domEvents
             if (!eventType.isAssignableTo(hasNativeEventType)) {
               error(
@@ -917,6 +920,8 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
         String methodName = m.getName();
         String handlerTypeName = handlerType.getQualifiedSourceName();
 
+        boolean isElemental = presenterType.getAnnotation(GwtPresenter.class).elemental();
+
         // Write handler
         SourceWriter eventHandlerWriter = new StringSourceWriter();
         if (!fieldsAreElements) {
@@ -925,6 +930,10 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
           eventHandlerWriter.println("public void " + handlerOnMethod.getName() + "(final "
               + eventType.getQualifiedSourceName() + " event) {");
           eventHandlerWriter.indent();
+        } else if (isElemental) {
+          eventHandlerWriter.println("new elemental.events.EventListener() {");
+          eventHandlerWriter.println("  @Override");
+          eventHandlerWriter.println("  public void handleEvent(elemental.events.Event event) {");
         } else {
           eventHandlerWriter.println("new "
               + com.guit.client.dom.EventHandler.class.getCanonicalName() + "() {");
@@ -964,16 +973,39 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
 
         if (fieldsAreElements) {
           if (bindingFields != null) {
-            writer.print("final " + com.guit.client.dom.EventHandler.class.getCanonicalName() + " "
-                + methodName + "$" + eventName + " =");
+            writer.print("final "
+                + (isElemental ? EventListener.class.getCanonicalName()
+                    : com.guit.client.dom.EventHandler.class.getCanonicalName()) + " " + methodName
+                + "$" + eventName + " =");
             writer.print(eventHandlerWriter.toString());
             writer.println(";");
 
             for (String f : bindingFields) {
-              writer
-                  .println("bindings.add(new " + ElementImpl.class.getCanonicalName() + "(view."
-                      + f + ")." + eventName.toLowerCase() + "(" + methodName + "$" + eventName
-                      + "));");
+              String eventNameLower = eventName.toLowerCase();
+              if (eventNameLower.equals("touchstart")) {
+                writer.println("if (com.google.gwt.event.dom.client.TouchEvent.isSupported()) {");
+              }
+              if (isElemental) {
+                writer.println("presenter." + f + ".setOn" + eventNameLower + "(" + methodName
+                    + "$" + eventName + ");");
+              } else {
+                writer.println("bindings.add(new " + ElementImpl.class.getCanonicalName()
+                    + "(view." + f + ")." + eventNameLower + "(" + methodName + "$" + eventName
+                    + "));");
+              }
+              if (eventNameLower.equals("touchstart")) {
+                writer.println("} else {");
+
+                if (isElemental) {
+                  writer.println("presenter." + f + ".setOnclick(" + methodName + "$" + eventName
+                      + ");");
+                } else {
+                  writer.println("bindings.add(new " + ElementImpl.class.getCanonicalName()
+                      + "(view." + f + ").click(" + methodName + "$" + eventName + "));");
+                }
+
+                writer.print("}");
+              }
             }
           }
         } else if (viewHandlerAnnotation.force()) {
@@ -1009,6 +1041,19 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
             writer.println(";");
 
             for (String f : bindingFields) {
+
+              // Small patch for touch events
+              if (addMethodName.equals("addTouchStartHandler") && parameters.length == 0) {
+                writer.println("if (!com.google.gwt.event.dom.client.TouchEvent.isSupported()) {");
+                writer
+                    .println("bindings.add(view."
+                        + f
+                        + ".addClickHandler(new "
+                        + ClickHandler.class.getCanonicalName()
+                        + "(){public void onClick(com.google.gwt.event.dom.client.ClickEvent event){presenter."
+                        + methodName + "();} }" + "));");
+                writer.println("}");
+              }
               writer.println("bindings.add(view." + f + "." + addMethodName + "(" + methodName
                   + "));");
             }
@@ -1058,7 +1103,6 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
 
     for (JField f : fields) {
       if (f.isAnnotationPresent(ViewField.class)) {
-
         // Check for repetided fields
         if (f.getType().isClassOrInterface().isAssignableTo(elementDomType)) {
           if (superFields.contains(f)) {
@@ -1078,10 +1122,10 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
         }
 
         JClassType type = f.getType().isClassOrInterface();
-        if (type.isInterface() == null && !viewField.provided()) {
-          error("A ViewField must be an interface. Found: %s.%s", presenterType
-              .getQualifiedSourceName(), name);
-        }
+        // if (type.isInterface() == null && !viewField.provided()) {
+        // error("A ViewField must be an interface. Found: %s.%s", presenterType
+        // .getQualifiedSourceName(), name);
+        // }
         if (type.isAssignableTo(viewAccesorType)) {
           writer.println("{");
           writer.indent();
@@ -1119,9 +1163,15 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
           writer.print("}");
           writer.println();
         } else if (type == null
-            || type.isAssignableFrom(validBindingFieldsType.get(viewName).isClassOrInterface())) {
-          writer.println("presenter." + name + " = " + "(" + f.getType().getQualifiedSourceName()
-              + ")" + "view." + viewName + ";");
+            || type.isAssignableFrom(validBindingFieldsType.get(viewName).isClassOrInterface())
+            || type.getQualifiedSourceName().startsWith("elemental.js.html")) {
+          String qualifiedSourceName = f.getType().getQualifiedSourceName();
+          if (qualifiedSourceName.startsWith("elemental.js.html")) {
+            writer.println("presenter." + name + " = " + "view." + viewName + ".cast();");
+          } else {
+            writer.println("presenter." + name + " = " + "(" + qualifiedSourceName + ")" + "view."
+                + viewName + ";");
+          }
           writer.println();
         } else {
           // Interface emulation (without exceptions)
@@ -1221,9 +1271,8 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
   }
 
   /**
-   * Finds the contributor by convention. It have to be on the same package than
-   * the annotation but instead of client -> rebind and it have to end with
-   * Contributor.
+   * Finds the contributor by convention. It have to be on the same package than the annotation but
+   * instead of client -> rebind and it have to end with Contributor.
    */
   public BinderContributor getContributor(Class<? extends Annotation> annotationType) {
     try {

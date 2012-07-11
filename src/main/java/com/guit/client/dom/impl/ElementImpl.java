@@ -1896,4 +1896,45 @@ public class ElementImpl implements Element {
   public int count() {
     return e.getChildCount();
   }
+
+  @Override
+  public HandlerRegistration touchstart(final EventHandler handler) {
+    return bindEvent(handler, "touchstart");
+  }
+
+  private HandlerRegistration bindEvent(final EventHandler handler, final String eventType) {
+    $(e).bind(eventType, null, new Function() {
+      @Override
+      public void f() {
+
+      }
+
+      @Override
+      public boolean f(com.google.gwt.user.client.Event e) {
+        handler.onEvent(new EventImpl(e));
+        return super.f(e);
+      }
+    });
+    return new HandlerRegistration() {
+      @Override
+      public void removeHandler() {
+        $(e).unbind(eventType);
+      }
+    };
+  }
+
+  @Override
+  public HandlerRegistration touchmove(EventHandler handler) {
+    return bindEvent(handler, "touchmove");
+  }
+
+  @Override
+  public HandlerRegistration touchcancel(EventHandler handler) {
+    return bindEvent(handler, "touchcancel");
+  }
+
+  @Override
+  public HandlerRegistration touchend(EventHandler handler) {
+    return bindEvent(handler, "touchend");
+  }
 }

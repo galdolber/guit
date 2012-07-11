@@ -57,6 +57,14 @@ public interface Element extends ViewAccesor {
 
   HandlerRegistration load(EventHandler handler);
 
+  HandlerRegistration touchstart(EventHandler handler);
+
+  HandlerRegistration touchmove(EventHandler handler);
+
+  HandlerRegistration touchcancel(EventHandler handler);
+
+  HandlerRegistration touchend(EventHandler handler);
+
   void click();
 
   void dblclick();

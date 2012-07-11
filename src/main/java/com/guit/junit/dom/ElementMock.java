@@ -67,8 +67,7 @@ public class ElementMock implements Element {
       DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
       document =
           docBuilder.parse(new ByteArrayInputStream(
-              ("<html><head></head><body style='padding:0;margin:0'></body></html>")
-              .getBytes()));
+              ("<html><head></head><body style='padding:0;margin:0'></body></html>").getBytes()));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -167,7 +166,7 @@ public class ElementMock implements Element {
       }
       String[] parts = s.split(":");
       if (parts.length != 2) {
-        parts = new String[]{parts[0], ""};
+        parts = new String[] {parts[0], ""};
       }
       if (property.equals(parts[0])) {
         parts[1] = value;
@@ -217,7 +216,7 @@ public class ElementMock implements Element {
       }
       String[] parts = s.split(":");
       if (parts.length != 2) {
-        parts = new String[]{parts[0], ""};
+        parts = new String[] {parts[0], ""};
       }
       if (property.equals(parts[0])) {
         return parts[1];
@@ -902,7 +901,7 @@ public class ElementMock implements Element {
 
   // XML UTILS
   public static List<Element> getChildrenByTagName(org.w3c.dom.Element parent, String name) {
-    return getChildrenByTagName(parent, new String[]{name});
+    return getChildrenByTagName(parent, new String[] {name});
   }
 
   public static List<Element> getChildrenByTagName(org.w3c.dom.Element parent, String[] names) {
@@ -921,7 +920,7 @@ public class ElementMock implements Element {
   }
 
   public static Element getFirstChildByTagName(org.w3c.dom.Element parent, String name) {
-    List<Element> list = getChildrenByTagName(parent, new String[]{name});
+    List<Element> list = getChildrenByTagName(parent, new String[] {name});
     if (list.size() > 0)
       return list.get(0);
     else
@@ -1976,12 +1975,12 @@ public class ElementMock implements Element {
   }
 
   public static native boolean isVisible(Element elem) /*-{
-		return (elem.style.display != 'none');
-  }-*/;
+                                                       return (elem.style.display != 'none');
+                                                       }-*/;
 
   public static native void setVisible(Element elem, boolean visible) /*-{
-		elem.style.display = visible ? '' : 'none';
-  }-*/;
+                                                                      elem.style.display = visible ? '' : 'none';
+                                                                      }-*/;
 
   @Override
   public void visible(boolean visible) {
@@ -2012,5 +2011,25 @@ public class ElementMock implements Element {
 
   public static Element getElementById(String id) {
     return new ElementMock(document.getElementById(id));
+  }
+
+  @Override
+  public HandlerRegistration touchstart(EventHandler handler) {
+    return bindEvent(handler, "touchstart");
+  }
+
+  @Override
+  public HandlerRegistration touchmove(EventHandler handler) {
+    return bindEvent(handler, "touchmove");
+  }
+
+  @Override
+  public HandlerRegistration touchcancel(EventHandler handler) {
+    return bindEvent(handler, "touchcancel");
+  }
+
+  @Override
+  public HandlerRegistration touchend(EventHandler handler) {
+    return bindEvent(handler, "touchend");
   }
 }
