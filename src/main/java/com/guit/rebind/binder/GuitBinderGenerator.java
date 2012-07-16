@@ -29,8 +29,11 @@ import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
 import com.google.gwt.dev.javac.typemodel.JRawType;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasNativeEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -982,7 +985,9 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
 
             for (String f : bindingFields) {
               String eventNameLower = eventName.toLowerCase();
-              if (eventNameLower.equals("touchstart")) {
+              boolean isTouchStart = eventNameLower.equals("touchstart");
+              boolean isTouchEnd = eventNameLower.equals("touchend");
+              if (isTouchStart || isTouchEnd) {
                 writer.println("if (com.google.gwt.event.dom.client.TouchEvent.isSupported()) {");
               }
               if (isElemental) {
@@ -993,15 +998,16 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
                     + "(view." + f + ")." + eventNameLower + "(" + methodName + "$" + eventName
                     + "));");
               }
-              if (eventNameLower.equals("touchstart")) {
+              if (isTouchStart || isTouchEnd) {
                 writer.println("} else {");
 
                 if (isElemental) {
-                  writer.println("presenter." + f + ".setOnclick(" + methodName + "$" + eventName
-                      + ");");
+                  writer.println("presenter." + f + ".setOnmouse" + (isTouchStart ? "down" : "up")
+                      + "(" + methodName + "$" + eventName + ");");
                 } else {
                   writer.println("bindings.add(new " + ElementImpl.class.getCanonicalName()
-                      + "(view." + f + ").click(" + methodName + "$" + eventName + "));");
+                      + "(view." + f + ")." + (isTouchStart ? "mousedown" : "mouseup") + "("
+                      + methodName + "$" + eventName + "));");
                 }
 
                 writer.print("}");
@@ -1045,13 +1051,19 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
               // Small patch for touch events
               if (addMethodName.equals("addTouchStartHandler") && parameters.length == 0) {
                 writer.println("if (!com.google.gwt.event.dom.client.TouchEvent.isSupported()) {");
-                writer
-                    .println("bindings.add(view."
-                        + f
-                        + ".addClickHandler(new "
-                        + ClickHandler.class.getCanonicalName()
-                        + "(){public void onClick(com.google.gwt.event.dom.client.ClickEvent event){presenter."
-                        + methodName + "();} }" + "));");
+                writer.println("bindings.add(view." + f + ".addMouseDownHandler(new "
+                    + MouseDownHandler.class.getCanonicalName() + "(){public void onMouseDown("
+                    + MouseDownEvent.class.getCanonicalName() + " event){presenter." + methodName
+                    + "();} }" + "));");
+                writer.println("}");
+              }
+
+              if (addMethodName.equals("addTouchEndHandler") && parameters.length == 0) {
+                writer.println("if (!com.google.gwt.event.dom.client.TouchEvent.isSupported()) {");
+                writer.println("bindings.add(view." + f + ".addClickHandler(new "
+                    + MouseUpHandler.class.getCanonicalName() + "(){public void onMouseUp("
+                    + MouseUpEvent.class.getCanonicalName() + " event){presenter." + methodName
+                    + "();} }" + "));");
                 writer.println("}");
               }
               writer.println("bindings.add(view." + f + "." + addMethodName + "(" + methodName
@@ -1164,9 +1176,9 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
           writer.println();
         } else if (type == null
             || type.isAssignableFrom(validBindingFieldsType.get(viewName).isClassOrInterface())
-            || type.getQualifiedSourceName().startsWith("elemental.js.html")) {
+            || type.getQualifiedSourceName().startsWith("elemental.")) {
           String qualifiedSourceName = f.getType().getQualifiedSourceName();
-          if (qualifiedSourceName.startsWith("elemental.js.html")) {
+          if (qualifiedSourceName.startsWith("elemental.")) {
             writer.println("presenter." + name + " = " + "view." + viewName + ".cast();");
           } else {
             writer.println("presenter." + name + " = " + "(" + qualifiedSourceName + ")" + "view."
