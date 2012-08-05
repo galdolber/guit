@@ -372,12 +372,13 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
     }
   }
 
-  private HashMap<String, Object> makeUnitData(JClassType presenterType, boolean isPresenter) {
+  private HashMap<String, Object> makeUnitData(JClassType presenterType, boolean isPresenter)
+      throws UnableToCompleteException {
     HashMap<String, Object> data = new HashMap<String, Object>();
     data.put("presenter", getModificationTime(presenterType));
     if (isPresenter) {
       data.put("view.ui.xml", GuitViewHelper.lastMofified(presenterType, "view/"
-          + presenterType.getSimpleSourceName() + ".ui.xml"));
+          + GuitViewHelper.getDeclaredTemplateName(presenterType, context, logger)));
     }
     return data;
   }
@@ -481,8 +482,8 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
   private HashMap<String, JType> getValidGuitViewBindingFields(JClassType presenterType)
       throws UnableToCompleteException {
     Set<GuitViewField> findUiFields =
-        GuitViewHelper.findUiFields(presenterType, logger, typeOracle, null, null, GuitViewHelper
-            .getDeclaredTemplateName(presenterType, context, logger));
+        GuitViewHelper.findUiFields(presenterType, logger, typeOracle, null, null, "view/"
+            + GuitViewHelper.getDeclaredTemplateName(presenterType, context, logger));
 
     HashMap<String, JType> fields = new HashMap<String, JType>();
     for (GuitViewField f : findUiFields) {
@@ -923,7 +924,8 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
         String methodName = m.getName();
         String handlerTypeName = handlerType.getQualifiedSourceName();
 
-        boolean isElemental = presenterType.getAnnotation(GwtPresenter.class).elemental();
+        GwtPresenter presenterAnnotation = presenterType.getAnnotation(GwtPresenter.class);
+        boolean isElemental = presenterAnnotation != null && presenterAnnotation.elemental();
 
         // Write handler
         SourceWriter eventHandlerWriter = new StringSourceWriter();

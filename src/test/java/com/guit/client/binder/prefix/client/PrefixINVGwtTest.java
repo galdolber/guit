@@ -18,7 +18,6 @@ public class PrefixINVGwtTest extends GWTTestCase {
       GuitEntryPoint entryPoint = new GuitEntryPoint();
       entryPoint.onModuleLoad();
     } catch (RuntimeException e) {
-      e.printStackTrace();
       return;
     }
 

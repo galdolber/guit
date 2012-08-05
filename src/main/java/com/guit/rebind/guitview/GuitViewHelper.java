@@ -259,7 +259,7 @@ public class GuitViewHelper {
     try {
       return new File(url.toURI()).lastModified();
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Can't find " + resourceName);
     }
   }
 

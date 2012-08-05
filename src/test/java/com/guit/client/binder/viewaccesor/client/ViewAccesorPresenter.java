@@ -27,21 +27,16 @@ public class ViewAccesorPresenter extends GuitPresenter<ViewAccesorBinder> {
 
     @Override
     public void setTarget(Object target) {
-
     }
-
   }
 
   public static interface AccesorWithoutImplementation extends ViewAccesor {
   }
 
   public static class AccesorWithoutImplementationImpl implements AccesorWithoutImplementation {
-
     @Override
     public void setTarget(Object target) {
-
     }
-
   }
 
   @ViewField
