@@ -105,7 +105,6 @@ public class GuitViewGenerator extends AbstractGenerator {
 
       // Autofocus
       String autofocus = gwtPresenter.autofocus();
-      System.out.println(autofocus);
       int autofocusDelay = gwtPresenter.autofocusDelay();
       JClassType autofocusType = null;
       if (!autofocus.isEmpty()) {

@@ -1,14 +1,16 @@
 /*
  * Copyright 2010 Gal Dolber.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.guit.rebind.binder;
@@ -439,8 +441,9 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
   }
 
   /**
-   * Find event in dom, shared or context locations. Context = '{currentPackage}/event'. Context
-   * events have priority over shared and dom ones.
+   * Find event in dom, shared or context locations. Context =
+   * '{currentPackage}/event'. Context events have priority over shared and dom
+   * ones.
    */
   protected JClassType getEventByName(String eventName, JPackage contextEventsPackage) {
     // Get event class name
@@ -824,11 +827,13 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
         fieldsAreElements = widgetCount == 0;
 
         /**
-         * Find parameters bindings. The binding can be with the event(cannot have anidation of
-         * getters):'getter'->'getGetter()' or with the view:'$getter'->'view.getGetter()' or with a
-         * view field '{viewField$getter}'->'view.viewField.getGetter();', this last two ones will
-         * support anidation: '{viewField$getter$another}'->'view.viewField.getGetter().getAnother (
-         * ) ; '
+         * Find parameters bindings. The binding can be with the event(cannot
+         * have anidation of getters):'getter'->'getGetter()' or with the
+         * view:'$getter'->'view.getGetter()' or with a view field
+         * '{viewField$getter}'->'view.viewField.getGetter();', this last two
+         * ones will support anidation:
+         * '{viewField$getter$another}'->'view.viewField.getGetter().getAnother
+         * ( ) ; '
          **/
         StringBuilder bindingParameters = new StringBuilder();
         JParameter[] parameters = m.getParameters();
@@ -1140,6 +1145,7 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
         // error("A ViewField must be an interface. Found: %s.%s", presenterType
         // .getQualifiedSourceName(), name);
         // }
+
         if (type.isAssignableTo(viewAccesorType)) {
           writer.println("{");
           writer.indent();
@@ -1180,12 +1186,8 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
             || type.isAssignableFrom(validBindingFieldsType.get(viewName).isClassOrInterface())
             || type.getQualifiedSourceName().startsWith("elemental.")) {
           String qualifiedSourceName = f.getType().getQualifiedSourceName();
-          if (qualifiedSourceName.startsWith("elemental.")) {
-            writer.println("presenter." + name + " = " + "view." + viewName + ".cast();");
-          } else {
-            writer.println("presenter." + name + " = " + "(" + qualifiedSourceName + ")" + "view."
-                + viewName + ";");
-          }
+          writer.println("presenter." + name + " = (" + qualifiedSourceName + ") view." + viewName
+              + ";");
           writer.println();
         } else {
           // Interface emulation (without exceptions)
@@ -1285,8 +1287,9 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
   }
 
   /**
-   * Finds the contributor by convention. It have to be on the same package than the annotation but
-   * instead of client -> rebind and it have to end with Contributor.
+   * Finds the contributor by convention. It have to be on the same package than
+   * the annotation but instead of client -> rebind and it have to end with
+   * Contributor.
    */
   public BinderContributor getContributor(Class<? extends Annotation> annotationType) {
     try {
