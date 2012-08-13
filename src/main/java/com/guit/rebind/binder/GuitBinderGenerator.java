@@ -1067,7 +1067,7 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
 
               if (addMethodName.equals("addTouchEndHandler") && parameters.length == 0) {
                 writer.println("if (!com.google.gwt.event.dom.client.TouchEvent.isSupported()) {");
-                writer.println("bindings.add(view." + f + ".addClickHandler(new "
+                writer.println("bindings.add(view." + f + ".addMouseUpHandler(new "
                     + MouseUpHandler.class.getCanonicalName() + "(){public void onMouseUp("
                     + MouseUpEvent.class.getCanonicalName() + " event){presenter." + methodName
                     + "();} }" + "));");
