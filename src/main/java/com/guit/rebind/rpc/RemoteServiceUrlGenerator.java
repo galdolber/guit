@@ -8,21 +8,26 @@ import com.google.gwt.user.rebind.SourceWriter;
 import com.guit.rebind.common.AbstractGenerator;
 import com.guit.rpc.RemoteServiceUrl;
 
+import java.util.ArrayList;
+
 public class RemoteServiceUrlGenerator extends AbstractGenerator {
 
   @Override
   protected void generate(SourceWriter writer) throws UnableToCompleteException {
     try {
       ConfigurationProperty property = propertiesOracle.getConfigurationProperty("remote.url");
-      String remoteUrl;
+      writer.println("public " + ArrayList.class.getCanonicalName() + "<String> getRemoteUrl(){");
       if (property.getValues().size() == 0) {
-        remoteUrl = "null";
+        writer.println(ArrayList.class.getCanonicalName() + "<String> list = null;");
       } else {
-        remoteUrl = "\"" + property.getValues().get(0) + "\"";
+        writer.println(ArrayList.class.getCanonicalName() + "<String> list = new "
+            + ArrayList.class.getCanonicalName() + "<String>();");
+        for (String u : property.getValues()) {
+          writer.println("list.add(\"" + u + "\");");
+        }
       }
-      writer.println("public String getRemoteUrl(){");
       writer.indent();
-      writer.println("return " + remoteUrl + ";");
+      writer.println("return list;");
       writer.outdent();
       writer.println("}");
     } catch (Exception e) {

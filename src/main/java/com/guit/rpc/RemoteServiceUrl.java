@@ -1,6 +1,8 @@
 package com.guit.rpc;
 
+import java.util.List;
+
 public interface RemoteServiceUrl {
 
-  String getRemoteUrl();
+  List<String> getRemoteUrl();
 }

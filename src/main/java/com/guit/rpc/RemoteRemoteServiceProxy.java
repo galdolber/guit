@@ -24,6 +24,8 @@ import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader
 import com.google.gwt.user.client.rpc.impl.RpcStatsContext;
 import com.google.gwt.user.client.rpc.impl.Serializer;
 
+import java.util.List;
+
 public abstract class RemoteRemoteServiceProxy extends RemoteServiceProxy {
   /**
    * Name of the URL parameter that holds the RPC request payload.
@@ -58,7 +60,7 @@ public abstract class RemoteRemoteServiceProxy extends RemoteServiceProxy {
         new RequestCallbackAdapter<T>(this, methodName, statsContext, callback, responseReader);
 
     JsonpRequestBuilder builder = new JsonpRequestBuilder();
-    String remoteUrl = url.getRemoteUrl();
+    String remoteUrl = getBaseUrl();
     if (remoteUrl == null) {
       throw new RuntimeException("No remote.url configuration property declared");
     }
@@ -75,5 +77,17 @@ public abstract class RemoteRemoteServiceProxy extends RemoteServiceProxy {
     });
 
     return null;
+  }
+
+  static int index = 0;
+
+  private String getBaseUrl() {
+    List<String> remoteUrl = url.getRemoteUrl();
+    if (index > remoteUrl.size() - 1) {
+      index = 0;
+    }
+    String ret = remoteUrl.get(index);
+    index++;
+    return ret;
   }
 }

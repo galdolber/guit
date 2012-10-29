@@ -6,6 +6,8 @@ import com.google.gwt.user.client.Timer;
 import com.guit.client.GuitEntryPoint;
 import com.guit.rpc.RemoteServiceUrl;
 
+import java.util.List;
+
 public class WebSocketManager {
 
   private static WebSocketManager INSTANCE;
@@ -18,21 +20,29 @@ public class WebSocketManager {
 
   private WebSocket webSocket;
 
-  private Timer reconnectTimer;
+  private Timer reconnectTimer = new Timer() {
+    @Override
+    public void run() {
+      connect();
+      timerDelay += 1000;
+    }
+  };
+
+  private int timerDelay = 1000;
 
   private OpenHandler openHandler = new OpenHandler() {
     @Override
     public void onOpen(WebSocket webSocket) {
-      if (reconnectTimer != null) {
-        reconnectTimer.cancel();
-        reconnectTimer = null;
-      }
+      timerDelay = 1000;
+      reconnectTimer.cancel();
       GuitEntryPoint.getEventBus().fireEvent(new ConnectionOpenEvent());
     }
   };
   private CloseHandler closeHandler = new CloseHandler() {
     @Override
     public void onClose(WebSocket webSocket) {
+      reconnectTimer.cancel();
+      reconnectTimer.schedule(timerDelay);
       GuitEntryPoint.getEventBus().fireEvent(new ConnectionCloseEvent());
     }
   };
@@ -57,8 +67,10 @@ public class WebSocketManager {
     }
   }
 
+  static int index = 0;
+
   private static String getBaseUrl() {
-    String remoteUrl = url.getRemoteUrl();
+    List<String> remoteUrl = url.getRemoteUrl();
     if (remoteUrl == null) {
       String s = GWT.getHostPageBaseURL();
       if (s.startsWith("http://")) {
@@ -68,7 +80,12 @@ public class WebSocketManager {
       }
       return s;
     } else {
-      return remoteUrl + "/";
+      if (index > remoteUrl.size() - 1) {
+        index = 0;
+      }
+      String ret = remoteUrl.get(index);
+      index++;
+      return ret + "/";
     }
   }
 
