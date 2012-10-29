@@ -23,7 +23,10 @@
 		<when-type-assignable class="com.guit.client.jsorm.JsonSerializer" />
 	</generate-with>
 
-
+  <generate-with class="com.guit.rebind.rpc.RemoteServiceUrlGenerator">
+    <when-type-assignable class="com.guit.rpc.RemoteServiceUrl" />
+  </generate-with>
+  
 	<define-property name="ui.xml.prefix" values="default" />
 	<set-property-fallback name="ui.xml.prefix"
 		value="default" />
@@ -73,6 +76,9 @@
 
 	<define-configuration-property name="app.encrypt.place"
 		is-multi-valued="false" />
+		
+  <define-configuration-property name="remote.url"
+    is-multi-valued="false" />
 
 	<!-- Gin contributors -->
 	<extend-configuration-property name="app.gin.contributor"

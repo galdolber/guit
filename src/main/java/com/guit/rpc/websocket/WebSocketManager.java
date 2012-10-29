@@ -4,10 +4,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 
 import com.guit.client.GuitEntryPoint;
+import com.guit.rpc.RemoteServiceUrl;
 
 public class WebSocketManager {
 
   private static WebSocketManager INSTANCE;
+
+  private static RemoteServiceUrl url = GWT.create(RemoteServiceUrl.class);
 
   public static WebSocketManager get() {
     return INSTANCE;
@@ -55,13 +58,18 @@ public class WebSocketManager {
   }
 
   private static String getBaseUrl() {
-    String s = GWT.getHostPageBaseURL();
-    if (s.startsWith("http://")) {
-      s = s.substring(7);
-    } else if (s.startsWith("https://")) {
-      s = s.substring(8);
+    String remoteUrl = url.getRemoteUrl();
+    if (remoteUrl == null) {
+      String s = GWT.getHostPageBaseURL();
+      if (s.startsWith("http://")) {
+        s = s.substring(7);
+      } else if (s.startsWith("https://")) {
+        s = s.substring(8);
+      }
+      return s;
+    } else {
+      return remoteUrl + "/";
     }
-    return s;
   }
 
   public int getReadyState() {
