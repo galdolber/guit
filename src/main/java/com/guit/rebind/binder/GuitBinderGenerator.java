@@ -1,16 +1,14 @@
 /*
  * Copyright 2010 Gal Dolber.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.guit.rebind.binder;
@@ -60,6 +58,7 @@ import com.guit.client.binder.Attribute;
 import com.guit.client.binder.ContributorAnnotation;
 import com.guit.client.binder.EventBusHandler;
 import com.guit.client.binder.GwtEditor;
+import com.guit.client.binder.Plugin;
 import com.guit.client.binder.ViewAccesor;
 import com.guit.client.binder.ViewField;
 import com.guit.client.binder.ViewHandler;
@@ -441,9 +440,8 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
   }
 
   /**
-   * Find event in dom, shared or context locations. Context =
-   * '{currentPackage}/event'. Context events have priority over shared and dom
-   * ones.
+   * Find event in dom, shared or context locations. Context = '{currentPackage}/event'. Context
+   * events have priority over shared and dom ones.
    */
   protected JClassType getEventByName(String eventName, JPackage contextEventsPackage) {
     // Get event class name
@@ -718,9 +716,8 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
     findAllMethods(presenterType, methods);
 
     for (JMethod m : methods) {
+      String name = m.getName();
       if (m.isAnnotationPresent(ViewHandler.class)) {
-        String name = m.getName();
-
         validateHandler(m, name, presenterType.getQualifiedSourceName());
 
         String eventName;
@@ -800,7 +797,7 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
           if (eventType.equals(gwtEventType)) {
             error(
                 "When using ViewFields you must specify the event class in the Handler annotation. Found: %s.%s",
-                presenterType.getQualifiedSourceName(), m.getName());
+                presenterType.getQualifiedSourceName(), name);
           }
 
           eventName = eventClassNameToEventName(eventType.getSimpleSourceName());
@@ -822,18 +819,16 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
         if (widgetCount != bindingFields.size() && widgetCount != 0) {
           error(
               "Not all fields on the class %s.%s are either all elements or all widgets. You cannot bind elements and widgets on the same handler",
-              presenterType, m.getName());
+              presenterType, name);
         }
         fieldsAreElements = widgetCount == 0;
 
         /**
-         * Find parameters bindings. The binding can be with the event(cannot
-         * have anidation of getters):'getter'->'getGetter()' or with the
-         * view:'$getter'->'view.getGetter()' or with a view field
-         * '{viewField$getter}'->'view.viewField.getGetter();', this last two
-         * ones will support anidation:
-         * '{viewField$getter$another}'->'view.viewField.getGetter().getAnother
-         * ( ) ; '
+         * Find parameters bindings. The binding can be with the event(cannot have anidation of
+         * getters):'getter'->'getGetter()' or with the view:'$getter'->'view.getGetter()' or with a
+         * view field '{viewField$getter}'->'view.viewField.getGetter();', this last two ones will
+         * support anidation: '{viewField$getter$another}'->'view.viewField.getGetter().getAnother (
+         * ) ; '
          **/
         StringBuilder bindingParameters = new StringBuilder();
         JParameter[] parameters = m.getParameters();
@@ -926,7 +921,7 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
         // 'onSomething' method
         JMethod handlerOnMethod = handlerMethods[0];
 
-        String methodName = m.getName();
+        String methodName = name;
         String handlerTypeName = handlerType.getQualifiedSourceName();
 
         GwtPresenter presenterAnnotation = presenterType.getAnnotation(GwtPresenter.class);
@@ -1081,6 +1076,37 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
           if (addHandlerToView) {
             writer.print("bindings.add(view." + addMethodName + "(" + eventHandlerWriter.toString()
                 + "));");
+          }
+        }
+      } else {
+        for (Annotation a : m.getAnnotations()) {
+          Class<? extends Annotation> annotationType = a.annotationType();
+          if (annotationType.isAnnotationPresent(Plugin.class)) {
+            String[] nameParts = name.split("[$]");
+
+            // Check that the binding fields are valid
+            StringBuilder fields = new StringBuilder();
+            for (int n = 0; n < nameParts.length - 1; n++) {
+              if (!validBindingFields.contains(nameParts[n])) {
+                error(
+                    "The field %s on the class %s is not a valid binding field. It must be public or protected and not static",
+                    nameParts[n], presenterType);
+              }
+              if (fields.length() > 0) {
+                fields.append(",");
+              }
+              fields.append("view." + nameParts[n]);
+            }
+
+            Class<?> handler = annotationType.getAnnotation(Plugin.class).value();
+            writer.println("new " + handler.getCanonicalName()
+                + "().install(new com.google.gwt.user.client.Command() {");
+            writer.println("@Override");
+            writer.println("public void execute() {");
+            writer.println("  presenter." + m.getName() + "();");
+            writer.println("}");
+            writer.println("}, new Object[]{");
+            writer.println(fields.toString() + "});");
           }
         }
       }
@@ -1287,9 +1313,8 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
   }
 
   /**
-   * Finds the contributor by convention. It have to be on the same package than
-   * the annotation but instead of client -> rebind and it have to end with
-   * Contributor.
+   * Finds the contributor by convention. It have to be on the same package than the annotation but
+   * instead of client -> rebind and it have to end with Contributor.
    */
   public BinderContributor getContributor(Class<? extends Annotation> annotationType) {
     try {

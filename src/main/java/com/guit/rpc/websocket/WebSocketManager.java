@@ -33,6 +33,10 @@ public class WebSocketManager {
   private OpenHandler openHandler = new OpenHandler() {
     @Override
     public void onOpen(WebSocket webSocket) {
+      if (queueData != null) {
+        send(queueData);
+        queueData = null;
+      }
       timerDelay = 1000;
       reconnectTimer.cancel();
       GuitEntryPoint.getEventBus().fireEvent(new ConnectionOpenEvent());
@@ -41,6 +45,7 @@ public class WebSocketManager {
   private CloseHandler closeHandler = new CloseHandler() {
     @Override
     public void onClose(WebSocket webSocket) {
+      connecting = false;
       reconnectTimer.cancel();
       reconnectTimer.schedule(timerDelay);
       GuitEntryPoint.getEventBus().fireEvent(new ConnectionCloseEvent());
@@ -50,12 +55,20 @@ public class WebSocketManager {
   private ErrorHandler errorHandler;
   private MessageHandler messageHandler;
 
+  private String queueData = null;
+
+  private boolean connecting;
+
   public WebSocketManager() {
     connect();
     INSTANCE = this;
   }
 
   public void connect() {
+    if (connecting) {
+      return;
+    }
+    connecting = true;
     webSocket = WebSocket.create("ws://" + getBaseUrl() + "websocket");
     webSocket.setOnOpen(openHandler);
     webSocket.setOnClose(closeHandler);
@@ -107,7 +120,8 @@ public class WebSocketManager {
     if (webSocket.getReadyState() == WebSocket.OPEN) {
       webSocket.send(data);
     } else {
-      throw new RuntimeException("The connection is not opened. Listen for ConnectionOpen event");
+      connect();
+      queueData = data;
     }
   }
 }
