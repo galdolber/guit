@@ -2,7 +2,7 @@ Because big projects can be elegant when the right way is the fastest one
 
 ### About documentation
 
-I'm migrating guit from google code, where there are a lot of old and ugly docs. Guit changed a lot from that and I'll be writing some new clean and fresh docs here in the next weeks
+I'm migrating guit from google code, where there are a lot of old and ugly docs. Guit changed a lot from that. No new docs for now (sorry)
 
 ### Components
 
