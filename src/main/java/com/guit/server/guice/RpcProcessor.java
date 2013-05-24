@@ -69,7 +69,7 @@ public class RpcProcessor implements SerializationPolicyProvider {
           new ServerSerializationStreamReader(classLoader, this);
       streamReader.prepareToRead(encodedRequest);
 
-      SerializationPolicy serializationPolicy = streamReader.getSerializationPolicy();
+      serializationPolicyCache = streamReader.getSerializationPolicy();
 
       // Predecible values
       streamReader.readString();
@@ -94,7 +94,7 @@ public class RpcProcessor implements SerializationPolicyProvider {
       try {
         return "//OK"
             + encodeResponse(method.getReturnType(), method.invoke(service, parameterValues),
-                flags, serializationPolicy);
+                flags, serializationPolicyCache);
       } catch (InvocationTargetException e) {
         Throwable cause = e.getCause();
         if (!(cause instanceof CommandException)) {
@@ -102,7 +102,7 @@ public class RpcProcessor implements SerializationPolicyProvider {
               + cause.toString(), cause);
         }
 
-        return "//EX" + encodeResponse(cause.getClass(), cause, flags, serializationPolicy);
+        return "//EX" + encodeResponse(cause.getClass(), cause, flags, serializationPolicyCache);
       }
     } catch (Exception ex) {
       throw new RuntimeException(ex);

@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 
 import com.guit.client.async.AbstractAsyncCallback;
+import com.guit.client.async.event.LoadingEvent;
 import com.guit.client.command.action.Action;
 import com.guit.client.command.action.Response;
 
@@ -37,6 +38,8 @@ public class CommandServiceImpl implements CommandService, ScheduledCommand {
   private final CommandRpcAsync service;
   private final Logger logger = Logger.getLogger("CommandServiceImpl");
 
+  private int executions = 0;
+  
   private HashMap<Action<Response>, ArrayList<AsyncCallback<Response>>> actionsMap =
       new LinkedHashMap<Action<Response>, ArrayList<AsyncCallback<Response>>>();
 
@@ -103,6 +106,10 @@ public class CommandServiceImpl implements CommandService, ScheduledCommand {
             @Override
             public void onFinish(CommandBatchRequestUnit requestUnit) {
               singleRequestPool.add(requestUnit);
+              executions--;
+              if (executions == 0) {
+                eventBus.fireEvent(new LoadingEvent(true));
+              }
             }
           });
     }
@@ -122,6 +129,10 @@ public class CommandServiceImpl implements CommandService, ScheduledCommand {
             @Override
             public void onFinish(CommandSingleRequestUnit requestUnit) {
               batchRequestPool.add(requestUnit);
+              executions--;
+              if (executions == 0) {
+                eventBus.fireEvent(new LoadingEvent(true));
+              }
             }
           });
     }
@@ -138,7 +149,10 @@ public class CommandServiceImpl implements CommandService, ScheduledCommand {
     if (LogConfiguration.loggingIsEnabled()) {
       logger.info("Execute " + actionsMap.size() + " actions");
     }
+    
     if (!actionsMap.isEmpty()) {
+      eventBus.fireEvent(new LoadingEvent(false));
+      executions++;
       HashMap<Action<Response>, ArrayList<AsyncCallback<Response>>> copy =
           new HashMap<Action<Response>, ArrayList<AsyncCallback<Response>>>();
       copy.putAll(actionsMap);
