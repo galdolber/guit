@@ -6,8 +6,6 @@ import com.google.gwt.user.client.Timer;
 import com.guit.client.GuitEntryPoint;
 import com.guit.rpc.RemoteServiceUrl;
 
-import java.util.List;
-
 public class WebSocketManager {
 
   private static WebSocketManager INSTANCE;
@@ -80,26 +78,23 @@ public class WebSocketManager {
     }
   }
 
-  static int index = 0;
-
   private static String getBaseUrl() {
-    List<String> remoteUrl = url.getRemoteUrl();
-    if (remoteUrl == null) {
-      String s = GWT.getHostPageBaseURL();
-      if (s.startsWith("http://")) {
-        s = s.substring(7);
-      } else if (s.startsWith("https://")) {
-        s = s.substring(8);
-      }
-      return s;
-    } else {
-      if (index > remoteUrl.size() - 1) {
-        index = 0;
-      }
-      String ret = remoteUrl.get(index);
-      index++;
-      return ret + "/";
+    Integer port = url.getPort();
+    String s = GWT.getHostPageBaseURL();
+    if (s.startsWith("http://")) {
+      s = s.substring(7);
+    } else if (s.startsWith("https://")) {
+      s = s.substring(8);
     }
+    
+    int index = s.indexOf(":");
+    String sport = "";
+    if (index != -1) {
+      sport = s.substring(index + 1);
+      s = s.substring(0, index);
+    }
+    
+    return s + ":" + (port == null ? (sport.isEmpty() ? "80" : sport) : port.toString()) + "/";
   }
 
   public int getReadyState() {

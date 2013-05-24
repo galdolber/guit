@@ -13,7 +13,7 @@
 	<inherits name='com.google.gwt.inject.Inject' />
 	<inherits name='com.google.gwt.json.JSON' />
 	<inherits name="com.google.gwt.logging.Logging" />
-	<inherits name='com.google.gwt.query.Query'/>
+	<inherits name='com.google.gwt.query.Query' />
 
 	<!-- Disable logging by default -->
 	<set-property name="gwt.logging.enabled" value="FALSE" />
@@ -23,10 +23,10 @@
 		<when-type-assignable class="com.guit.client.jsorm.JsonSerializer" />
 	</generate-with>
 
-  <generate-with class="com.guit.rebind.rpc.RemoteServiceUrlGenerator">
-    <when-type-assignable class="com.guit.rpc.RemoteServiceUrl" />
-  </generate-with>
-  
+	<generate-with class="com.guit.rebind.rpc.RemoteServiceUrlGenerator">
+		<when-type-assignable class="com.guit.rpc.RemoteServiceUrl" />
+	</generate-with>
+
 	<define-property name="ui.xml.prefix" values="default" />
 	<set-property-fallback name="ui.xml.prefix"
 		value="default" />
@@ -76,9 +76,12 @@
 
 	<define-configuration-property name="app.encrypt.place"
 		is-multi-valued="false" />
-		
-  <define-configuration-property name="remote.url"
-    is-multi-valued="true" />
+
+	<define-configuration-property name="remote.url"
+		is-multi-valued="true" />
+
+	<define-configuration-property name="remote.port"
+		is-multi-valued="false" />
 
 	<!-- Gin contributors -->
 	<extend-configuration-property name="app.gin.contributor"
@@ -111,6 +114,9 @@
 	<!-- False if you want to bind your own crypter -->
 	<set-configuration-property name="app.encrypt.base64"
 		value="true" />
+
+	<set-configuration-property name="remote.port"
+		value="" />
 
 	<!-- Iterable interfaces implementations -->
 	<extend-configuration-property name="json.orm.exception"
