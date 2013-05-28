@@ -87,6 +87,10 @@ public class WebSocketManager {
       s = s.substring(8);
     }
     
+    if (s.endsWith("/")) {
+      s = s.substring(0, s.length() - 1);
+    }
+    
     int index = s.indexOf(":");
     String sport = "";
     if (index != -1) {

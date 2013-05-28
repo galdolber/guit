@@ -28,6 +28,7 @@ import com.google.gwt.user.client.rpc.impl.Serializer;
 import com.guit.client.GuitEntryPoint;
 import com.guit.client.async.event.AsyncExceptionEvent;
 import com.guit.rpc.websocket.ErrorHandler;
+import com.guit.rpc.websocket.ForcedRefreshEvent;
 import com.guit.rpc.websocket.MessageEvent;
 import com.guit.rpc.websocket.MessageHandler;
 import com.guit.rpc.websocket.ServerPushData;
@@ -46,7 +47,9 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
     @Override
     public void onMessage(WebSocket webSocket, MessageEvent event) {
       String data = event.getData();
-      if (data.startsWith("RPC")) {
+      if (data.equals("//ERR_REFRESH")) {
+        GuitEntryPoint.getEventBus().fireEvent(new ForcedRefreshEvent());
+      } else if (data.startsWith("RPC")) {
         data = data.substring(3);
         int index = data.indexOf("_");
         Long requestNumber = Long.valueOf(data.substring(0, index));
