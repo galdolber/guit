@@ -1,7 +1,6 @@
 package com.guit.rpc.websocket;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
 
 import com.guit.client.GuitEntryPoint;
 import com.guit.rpc.RemoteServiceUrl;
@@ -18,16 +17,6 @@ public class WebSocketManager {
 
   private WebSocket webSocket;
 
-  private Timer reconnectTimer = new Timer() {
-    @Override
-    public void run() {
-      connect();
-      timerDelay += 1000;
-    }
-  };
-
-  private int timerDelay = 1000;
-
   private OpenHandler openHandler = new OpenHandler() {
     @Override
     public void onOpen(WebSocket webSocket) {
@@ -35,8 +24,6 @@ public class WebSocketManager {
         send(queueData);
         queueData = null;
       }
-      timerDelay = 1000;
-      reconnectTimer.cancel();
       GuitEntryPoint.getEventBus().fireEvent(new ConnectionOpenEvent());
     }
   };
@@ -44,8 +31,6 @@ public class WebSocketManager {
     @Override
     public void onClose(WebSocket webSocket) {
       connecting = false;
-      reconnectTimer.cancel();
-      reconnectTimer.schedule(timerDelay);
       GuitEntryPoint.getEventBus().fireEvent(new ConnectionCloseEvent());
     }
   };
