@@ -36,7 +36,7 @@ public class RpcProcessor implements SerializationPolicyProvider {
   @StaticFilesPath
   String staticFilesPath;
 
-  private SerializationPolicy serializationPolicyCache;
+  public SerializationPolicy serializationPolicyCache;
 
   @Inject
   public RpcProcessor() {

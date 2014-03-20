@@ -1,9 +1,9 @@
 package com.guit.client.dom;
 
-import com.guit.junit.dom.DivMock;
-import com.guit.junit.dom.ElementMock;
-import com.guit.junit.dom.FormMock;
-import com.guit.junit.dom.GuitDomMock;
+import com.guit.client.dom.impl.DivImpl;
+import com.guit.client.dom.impl.ElementImpl;
+import com.guit.client.dom.impl.FormImpl;
+import com.guit.client.dom.impl.GuitDomImpl;
 
 import static junit.framework.Assert.*;
 
@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ElementGwtTest {
 
-  GuitDom f = new GuitDomMock();
+  GuitDom f = new GuitDomImpl();
 
   @Test
   public void testBody() {
@@ -41,14 +41,14 @@ public class ElementGwtTest {
 
   @Test(expected = RuntimeException.class)
   public void childrenException() {
-    Element e = new ElementMock("input");
+    Element e = new ElementImpl("input");
     e.html("<sp");
     e.children();
   }
 
   @Test
   public void test() {
-    Element e = new ElementMock("input");
+    Element e = new ElementImpl("input");
     assertTrue(e.hasTagName("input"));
     assertFalse(e.hasTagName("label"));
     assertEquals("input", e.tag());
@@ -126,7 +126,7 @@ public class ElementGwtTest {
 
   @Test(expected = RuntimeException.class)
   public void queryException() {
-    Element e = new ElementMock("div");
+    Element e = new ElementImpl("div");
     e.html("<span");
     List<Element> emptyQuery = e.query("label");
     assertEquals(0, emptyQuery.size());
@@ -134,7 +134,7 @@ public class ElementGwtTest {
 
   @Test
   public void emptyQuery() {
-    Element e = new ElementMock("div");
+    Element e = new ElementImpl("div");
     List<Element> emptyQuery = e.query("label");
     assertEquals(0, emptyQuery.size());
   }
@@ -143,7 +143,7 @@ public class ElementGwtTest {
 
   @Test
   public void callers() {
-    Element e = new ElementMock("div");
+    Element e = new ElementImpl("div");
     e.blur(new EventHandler() {
       @Override
       public void onEvent(Event event) {
@@ -159,8 +159,8 @@ public class ElementGwtTest {
 
   @Test
   public void testTable() {
-    Form e = new FormMock();
-    Div div = new DivMock();
+    Form e = new FormImpl();
+    Div div = new DivImpl();
     e.add(div);
     e.html("<span><div><input id='12'></input></div></span>" + e.html());
     System.out.println(e.html());
@@ -168,7 +168,7 @@ public class ElementGwtTest {
 
   @Test
   public void className() {
-    Element e = new ElementMock("div");
+    Element e = new ElementImpl("div");
 
     String name1 = "class1";
     String name2 = "class2";
@@ -199,7 +199,7 @@ public class ElementGwtTest {
 
   @Test
   public void properties() {
-    Element e = new ElementMock("div");
+    Element e = new ElementImpl("div");
     String value = "value";
     e.lang(value);
     assertEquals(value, e.lang());
@@ -246,7 +246,7 @@ public class ElementGwtTest {
 
   @Test
   public void nextSibling() {
-    Element e = new ElementMock("div");
+    Element e = new ElementImpl("div");
     e.html("<span></span><label style='color:red'></label>");
     Element label = e.first().nextSibling();
     assertEquals("label", label.tag());
@@ -255,7 +255,7 @@ public class ElementGwtTest {
 
   @Test
   public void styleWithoutValue() {
-    Element e = new ElementMock("div");
+    Element e = new ElementImpl("div");
     e.attr("style", "color");
     e.attr("style", "background-color:");
     e.css("font", "arial");
@@ -271,9 +271,9 @@ public class ElementGwtTest {
     String span = "span";
     String div = "div";
 
-    Element e = new ElementMock(div);
+    Element e = new ElementImpl(div);
 
-    Element c = new ElementMock(span);
+    Element c = new ElementImpl(span);
     c.attr(name, firstName);
 
     e.add(c);
@@ -284,7 +284,7 @@ public class ElementGwtTest {
     assertEquals(span, retrivedSpan.tag());
     assertEquals(firstName, retrivedSpan.attr(name));
 
-    Element d = new ElementMock(div);
+    Element d = new ElementImpl(div);
     d.attr(name, lastName);
 
     e.add(d);
@@ -316,9 +316,9 @@ public class ElementGwtTest {
     String span = "span";
     String div = "div";
 
-    Element e = new ElementMock(div);
+    Element e = new ElementImpl(div);
 
-    Element c = new ElementMock(span);
+    Element c = new ElementImpl(span);
     c.attr(name, firstName);
 
     e.insert(c, 0);
@@ -329,7 +329,7 @@ public class ElementGwtTest {
     assertEquals(span, retrivedSpan.tag());
     assertEquals(firstName, retrivedSpan.attr(name));
 
-    Element d = new ElementMock(div);
+    Element d = new ElementImpl(div);
     d.attr(name, lastName);
 
     e.insert(d, 1);
@@ -340,7 +340,7 @@ public class ElementGwtTest {
     assertEquals(div, retrivedDiv.tag());
     assertEquals(lastName, retrivedDiv.attr(name));
 
-    Element k = new ElementMock(div);
+    Element k = new ElementImpl(div);
     k.attr(name, phone);
 
     e.insert(k, 1);

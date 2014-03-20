@@ -131,6 +131,10 @@ public class JsonSerializerUtil {
     implName.append("_GuitJsonSerializer");
 
     String packageName = pojoType.getPackage().getName();
+    if (packageName.startsWith("java.")) {
+      packageName = "com.guit.java." + packageName.substring(5);
+    }
+    
     String implNameString = implName.toString();
 
     if (getClass(packageName, implNameString)) {
