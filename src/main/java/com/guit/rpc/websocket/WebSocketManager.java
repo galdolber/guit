@@ -52,7 +52,7 @@ public class WebSocketManager {
       return;
     }
     connecting = true;
-    webSocket = WebSocket.create("ws://" + getBaseUrl() + "websocket");
+    webSocket = WebSocket.create(getBaseUrl() + "websocket");
     webSocket.setOnOpen(openHandler);
     webSocket.setOnClose(closeHandler);
     if (errorHandler != null) {
@@ -64,11 +64,12 @@ public class WebSocketManager {
   }
 
   private static String getBaseUrl() {
-    Integer port = url.getPort();
     String s = GWT.getHostPageBaseURL();
+    boolean isSecure = false;
     if (s.startsWith("http://")) {
       s = s.substring(7);
     } else if (s.startsWith("https://")) {
+      isSecure = true;
       s = s.substring(8);
     }
     
@@ -83,7 +84,9 @@ public class WebSocketManager {
       s = s.substring(0, index);
     }
     
-    return s + ":" + (port == null ? (sport.isEmpty() ? "80" : sport) : port.toString()) + "/";
+    Integer port = url.getPort();
+    
+    return (isSecure ? "wss://" : "ws://") + s + ":" + (port == null ? (sport.isEmpty() ? "80" : sport) : port.toString()) + "/";
   }
 
   public int getReadyState() {
