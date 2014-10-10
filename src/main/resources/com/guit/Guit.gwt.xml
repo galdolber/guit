@@ -23,10 +23,6 @@
 		<when-type-assignable class="com.guit.client.jsorm.JsonSerializer" />
 	</generate-with>
 
-	<generate-with class="com.guit.rebind.rpc.RemoteServiceUrlGenerator">
-		<when-type-assignable class="com.guit.rpc.RemoteServiceUrl" />
-	</generate-with>
-
 	<define-property name="ui.xml.prefix" values="default" />
 	<set-property-fallback name="ui.xml.prefix"
 		value="default" />

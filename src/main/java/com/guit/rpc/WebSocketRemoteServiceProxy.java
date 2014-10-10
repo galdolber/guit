@@ -15,7 +15,6 @@ package com.guit.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
-import com.google.gwt.rpc.client.impl.RemoteException;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
@@ -61,8 +60,6 @@ public abstract class WebSocketRemoteServiceProxy extends RemoteServiceProxy {
           GuitEntryPoint.getEventBus().fireEvent(
               new ServerPushEvent(((ServerPushData) createStreamReader(data).readObject())
                   .getData()));
-        } catch (RemoteException e) {
-          throw new RuntimeException(e.getCause());
         } catch (SerializationException e) {
           throw new IncompatibleRemoteServiceException("The response could not be deserialized", e);
         } catch (Throwable e) {
