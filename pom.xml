@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>guit</groupId>
 	<artifactId>guit</artifactId>
-	<version>1.9.0</version>
+	<version>1.9.1</version>
 	<name>Guit</name>
 
 	<properties>
@@ -11,11 +11,6 @@
 	</properties>
 
 	<repositories>
-	 <repository>
-      <id>sonatype</id>
-      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
-	 </repository>
-	
 		<repository>
 			<id>gwt-oss-sonatype</id>
 			<name>oss-sonatype</name>
@@ -108,7 +103,7 @@
 		<dependency>
 			<groupId>com.googlecode.gwtquery</groupId>
 			<artifactId>gwtquery</artifactId>
-			<version>1.1.1-SNAPSHOT</version>
+			<version>1.4.2</version>
 			<scope>provided</scope>
 		</dependency>
 

@@ -1,6 +1,6 @@
 package com.guit.client.binder;
 
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 public class IElementImpl implements IElement {
 

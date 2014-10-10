@@ -62,6 +62,8 @@ public class MouseButtonContributor implements BinderContributor {
         case RIGHT:
           buttonNumber = 2;
           break;
+        default:
+          break;
       }
       condition.append("_____mouseButton != " + buttonNumber);
     }

@@ -103,7 +103,7 @@ public class ElementImpl implements Element {
     for (int i = 0; i < children.getLength(); i++) {
       Node node = children.getItem(i);
       if (node.getNodeType() == Node.ELEMENT_NODE) {
-        c.add(new ElementImpl((com.google.gwt.user.client.Element) node));
+        c.add(new ElementImpl((com.google.gwt.dom.client.Element) node));
       }
     }
     return c;
@@ -221,7 +221,7 @@ public class ElementImpl implements Element {
     NodeList<com.google.gwt.dom.client.Element> els = e.getElementsByTagName(name);
     ArrayList<Element> el = new ArrayList<Element>();
     for (int i = 0; i < els.getLength(); i++) {
-      el.add(new ElementImpl((com.google.gwt.user.client.Element) els.getItem(i)));
+      el.add(new ElementImpl((com.google.gwt.dom.client.Element) els.getItem(i)));
     }
     return el;
   }
@@ -259,7 +259,7 @@ public class ElementImpl implements Element {
 
   @Override
   public Element parent() {
-    return new ElementImpl((com.google.gwt.user.client.Element) e.getParentElement());
+    return new ElementImpl((com.google.gwt.dom.client.Element) e.getParentElement());
   }
 
   @Override
@@ -873,7 +873,7 @@ public class ElementImpl implements Element {
     if (n == null) {
       return null;
     }
-    return new ElementImpl((com.google.gwt.user.client.Element) n);
+    return new ElementImpl((com.google.gwt.dom.client.Element) n);
   }
 
   @Override

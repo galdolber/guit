@@ -16,7 +16,7 @@ import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 import com.guit.client.Implementation;
-import com.guit.client.binder.ViewAccesor;
+import com.guit.client.ViewAccesor;
 import com.guit.client.dom.impl.ElementImpl;
 import com.guit.client.junit.Mock;
 import com.guit.junit.dom.ElementMock;

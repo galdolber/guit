@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.2.0//EN" "http://google-web-toolkit.googlecode.com/svn/tags/2.2.0/distro-source/core/src/gwt-module.dtd">
-<module>
-	<inherits name="com.guit.client.binder.prefix.TestPrefixSupportModule" />
-
- 	<!-- Static value without ui implementation -> fallback value should be used -->
-	<set-property name="ui.xml.prefix" value="PrefixC"/>  
-</module>	

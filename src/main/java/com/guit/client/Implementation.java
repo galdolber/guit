@@ -15,6 +15,9 @@
  */
 package com.guit.client;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * This annotation specify the implementation of a ViewAccesor.
  */

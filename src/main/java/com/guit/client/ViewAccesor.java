@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Richard Zschech.
+ * Copyright 2010 Gal Dolber.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,18 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.guit.rpc.websocket;
+package com.guit.client;
 
-/**
- * A message callback for an {@Link WebSocket} object.
- */
-public interface MessageHandler {
+public interface ViewAccesor {
 
   /**
-   * This is called whenever the state of the WebSocket changes. See
-   * {@link WebSocket#setMessageHandler}.
-   * 
-   * @param webSocket the object which has received a message.
+   * Set the target.
    */
-  public void onMessage(WebSocket webSocket, MessageEvent event);
+  void setTarget(Object target);
 }

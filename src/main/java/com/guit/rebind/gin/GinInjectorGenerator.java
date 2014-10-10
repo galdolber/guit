@@ -127,17 +127,20 @@ public class GinInjectorGenerator extends AbstractGenerator implements GinContex
       SourceWriter writer = composer.createSourceWriter(context, printWriter);
 
       writer.println(SINGLETON_DECLARATION);
-
+      
       for (String classType : injectedClasses) {
+        load(classType);
         writer.println(classType + " " + GinOracle.getGetterMethodName(classType) + "();");
       }
 
       for (String classType : providedClasses) {
+        load(classType);
         writer.println(Provider.class.getCanonicalName() + "<" + classType + "> "
             + GinOracle.getProviderGetterMethodName(classType) + "();");
       }
 
       for (String classType : asyncProvidedClasses) {
+        load(classType);
         writer.println(AsyncProvider.class.getCanonicalName() + "<" + classType + "> "
             + GinOracle.getAsyncProviderGetterMethodName(classType) + "();");
       }
@@ -146,6 +149,14 @@ public class GinInjectorGenerator extends AbstractGenerator implements GinContex
     }
 
     return null;
+  }
+
+  private void load(String classType) {
+    try {
+      GinInjectorGenerator.class.getClassLoader().loadClass(classType);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private HashSet<String> findClassOrLinkedInjectionKey(HashSet<String> original) {

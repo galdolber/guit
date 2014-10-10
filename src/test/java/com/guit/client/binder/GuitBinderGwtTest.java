@@ -144,11 +144,11 @@ public class GuitBinderGwtTest extends GWTTestCase {
     assertTrue(presenter.annotation$manyfields$click$triggered);
   }
 
-  public void testRunAsyncViewHandler() {
-    presenter.runasync$triggered = false;
-    ((Button) presenter.runasync).click();
-    assertTrue(presenter.runasync$triggered);
-  }
+//  public void testRunAsyncViewHandler() {
+//    presenter.runasync$triggered = false;
+//    ((Button) presenter.runasync).click();
+//    assertTrue(presenter.runasync$triggered);
+//  }
 
   public void testUserActionViewHandler() {
     final HasState<Boolean> state = new HasState<Boolean>();

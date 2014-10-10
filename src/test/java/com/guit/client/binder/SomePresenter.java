@@ -27,6 +27,7 @@ import com.google.inject.Singleton;
 
 import com.guit.client.GuitPresenter;
 import com.guit.client.Implementation;
+import com.guit.client.ViewAccesor;
 import com.guit.client.apt.GwtPresenter;
 import com.guit.client.async.event.AsyncExceptionEvent;
 import com.guit.client.binder.SomePresenter.TestBinder;

@@ -206,6 +206,8 @@ public class GuitViewGenerator extends AbstractGenerator {
       case WIDGET:
         composer.setSuperclass(Widget.class.getCanonicalName());
         break;
+      default:
+        break;
     }
   }
 

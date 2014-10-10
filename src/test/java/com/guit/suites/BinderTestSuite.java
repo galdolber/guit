@@ -20,16 +20,12 @@ import junit.framework.TestSuite;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.guit.client.binder.GuitBinderGwtTest;
-import com.guit.client.binder.prefix.client.PrefixTestSuite;
-import com.guit.client.binder.viewaccesor.client.ViewAccesorGwtTest;
 
 public class BinderTestSuite extends GWTTestSuite {
 
   public static Test suite() {
     TestSuite suite = new TestSuite("Test guit binder");
     suite.addTestSuite(GuitBinderGwtTest.class);
-    suite.addTestSuite(ViewAccesorGwtTest.class);
-    suite.addTest(PrefixTestSuite.suite());
     return suite;
   }
 }

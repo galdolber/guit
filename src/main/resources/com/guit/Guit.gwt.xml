@@ -127,4 +127,6 @@
 		value="com.guit.client.display.DisplayModule" />
 
 	<entry-point class='com.guit.client.GuitEntryPoint' />
+	
+	<source path='client' />
 </module>
