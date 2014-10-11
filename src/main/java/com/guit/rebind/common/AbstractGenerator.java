@@ -16,10 +16,14 @@
 package com.guit.rebind.common;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.CachedPropertyInformation;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.IncrementalGenerator;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.RebindMode;
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -29,10 +33,11 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
+import com.google.gwt.user.rebind.rpc.CachedRpcTypeInformation;
 
 import java.io.PrintWriter;
 
-public abstract class AbstractGenerator extends Generator {
+public abstract class AbstractGenerator extends IncrementalGenerator {
 
   protected TreeLogger logger;
   protected GeneratorContext context;
@@ -47,7 +52,8 @@ public abstract class AbstractGenerator extends Generator {
   protected String createdClassName;
   protected String implementationPostfix = "Impl";
 
-  protected ClassSourceFileComposerFactory createComposer() throws UnableToCompleteException {
+  protected ClassSourceFileComposerFactory createComposer()
+      throws UnableToCompleteException {
     return new ClassSourceFileComposerFactory(generatedPackage, implName);
   }
 
@@ -55,7 +61,8 @@ public abstract class AbstractGenerator extends Generator {
     return context.tryCreate(logger, generatedPackage, implName);
   }
 
-  protected void error(String message, Object... params) throws UnableToCompleteException {
+  protected void error(String message, Object... params)
+      throws UnableToCompleteException {
     logger.log(TreeLogger.ERROR, String.format(message, params));
     throw new UnableToCompleteException();
   }
@@ -84,10 +91,12 @@ public abstract class AbstractGenerator extends Generator {
     }
   }
 
-  protected abstract void generate(SourceWriter writer) throws UnableToCompleteException;
+  protected abstract void generate(SourceWriter writer)
+      throws UnableToCompleteException;
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext context, String typeName)
+  public RebindResult generateIncrementally(TreeLogger logger,
+      GeneratorContext context, String typeName)
       throws UnableToCompleteException {
     saveVariables(logger, context, typeName);
 
@@ -100,6 +109,11 @@ public abstract class AbstractGenerator extends Generator {
       implName = enclosingType.getSimpleSourceName() + implName;
     }
 
+    RebindMode rebindMode = context.isGeneratorResultCachingEnabled() ? rebindMode() : RebindMode.USE_ALL_NEW_WITH_NO_CACHING;
+    if (rebindMode.equals(RebindMode.USE_ALL_CACHED) || rebindMode.equals(RebindMode.USE_EXISTING)) {
+      return new RebindResult(rebindMode, generatedPackage + "." + implName);
+    }
+    
     ClassSourceFileComposerFactory composer = createComposer();
     processComposer(composer);
     createdClassName = composer.getCreatedClassName();
@@ -110,8 +124,17 @@ public abstract class AbstractGenerator extends Generator {
 
       writer.commit(logger);
     }
+    
+    RebindResult result = new RebindResult(rebindMode, composer.getCreatedClassName());
+    saveClientData(result);
+    return result;
+  }
 
-    return composer.getCreatedClassName();
+  protected RebindMode rebindMode() {
+    return RebindMode.USE_ALL_NEW_WITH_NO_CACHING;
+  }
+
+  protected void saveClientData(RebindResult result) {
   }
 
   protected String processImplName(String implName) {
@@ -146,9 +169,11 @@ public abstract class AbstractGenerator extends Generator {
     }
   }
 
-  protected abstract void processComposer(ClassSourceFileComposerFactory composer);
+  protected abstract void processComposer(
+      ClassSourceFileComposerFactory composer);
 
-  protected void saveVariables(TreeLogger logger, GeneratorContext context, String typeName) {
+  protected void saveVariables(TreeLogger logger, GeneratorContext context,
+      String typeName) {
     this.logger = logger;
     this.context = context;
     this.typeName = typeName;
@@ -164,5 +189,10 @@ public abstract class AbstractGenerator extends Generator {
 
   public TreeLogger getLogger() {
     return logger;
+  }
+
+  @Override
+  public long getVersionId() {
+    return 1L;
   }
 }

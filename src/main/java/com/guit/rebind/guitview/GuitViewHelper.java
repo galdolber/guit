@@ -42,9 +42,9 @@ import java.util.Set;
 public class GuitViewHelper {
   static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
 
-  private static void findUiBundleFields(Set<GuitViewField> list, NodeList childNodes,
-      String binderPrefix, TreeLogger logger, Set<String> providedFields)
-      throws UnableToCompleteException {
+  private static void findUiBundleFields(Set<GuitViewField> list,
+      NodeList childNodes, String binderPrefix, TreeLogger logger,
+      Set<String> providedFields) throws UnableToCompleteException {
     for (int n = 0; n < childNodes.getLength(); n++) {
       Node item = childNodes.item(n);
       if (item.getNodeType() == Node.ELEMENT_NODE) {
@@ -70,32 +70,52 @@ public class GuitViewHelper {
             namespace = DataResource.class.getCanonicalName();
           }
           list.add(new GuitViewField(field, namespace, "@UiField"
-              + (providedFields.contains(field) ? "(provided=true) " : " ") + " public "
-              + namespace + " " + field + ";"));
+              + (providedFields.contains(field) ? "(provided=true) " : " ")
+              + " public " + namespace + " " + field + ";"));
         }
       }
     }
   }
+  
+  static HashMap<String, Long> cacheTimes = new HashMap<String, Long>();
+  static HashMap<String, Set<GuitViewField>> cache = new HashMap<String, Set<GuitViewField>>();
 
-  public static Set<GuitViewField> findUiFields(JClassType presenterClass, TreeLogger logger,
-      TypeOracle typeOracle, JClassType editorPojo, HashMap<String, String> editorPaths,
-      String template) throws UnableToCompleteException {
+  public static Set<GuitViewField> findUiFields(JClassType presenterClass,
+      TreeLogger logger, TypeOracle typeOracle, JClassType editorPojo,
+      HashMap<String, String> editorPaths, String template)
+      throws UnableToCompleteException {
+    String key = presenterClass.getQualifiedSourceName();
+    try {
+      Long lastModified = getUiTemplateURL(presenterClass, template, logger).openConnection()
+              .getLastModified();
+      if (lastModified == cacheTimes.get(lastModified)) {
+        return cache.get(key);
+      } else {
+        cacheTimes.put(key, lastModified);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
     Set<GuitViewField> list = new HashSet<GuitViewField>();
-    Element documentElement = getW3cDoc(presenterClass, template, logger).getDocumentElement();
+    Element documentElement = getW3cDoc(presenterClass, template, logger)
+        .getDocumentElement();
 
     // Finds all provided fields
     HashSet<String> providedFields = getProvidedFields(presenterClass, logger);
 
     String binderPrefix = documentElement.lookupPrefix(BINDER_URI);
     String uiFieldAttribute = binderPrefix + ":field";
-    findUiFields(list, documentElement, uiFieldAttribute, logger, typeOracle, providedFields,
-        editorPojo, editorPaths);
-    findUiBundleFields(list, documentElement.getChildNodes(), binderPrefix, logger, providedFields);
+    findUiFields(list, documentElement, uiFieldAttribute, logger, typeOracle,
+        providedFields, editorPojo, editorPaths);
+    findUiBundleFields(list, documentElement.getChildNodes(), binderPrefix,
+        logger, providedFields);
+    cache.put(key, list);
     return list;
   }
 
-  public static HashSet<String> getProvidedFields(JClassType baseClass, TreeLogger logger)
-      throws UnableToCompleteException {
+  public static HashSet<String> getProvidedFields(JClassType baseClass,
+      TreeLogger logger) throws UnableToCompleteException {
     HashSet<String> providedFields = new HashSet<String>();
     ArrayList<JField> fields = new ArrayList<JField>();
     GuitBinderGenerator.collectAllFields(baseClass, fields);
@@ -106,11 +126,13 @@ public class GuitViewHelper {
           name = f.getName();
         }
 
-        if (f.getAnnotation(ViewField.class).provided() || f.isAnnotationPresent(Inject.class)
+        if (f.getAnnotation(ViewField.class).provided()
+            || f.isAnnotationPresent(Inject.class)
             || f.isAnnotationPresent(javax.inject.Inject.class)) {
           if (providedFields.contains(name)) {
-            logger.log(Type.ERROR, "There can be only one provided @ViewField for a field. Found: "
-                + baseClass.getQualifiedSourceName() + "." + f.getName());
+            logger.log(Type.ERROR,
+                "There can be only one provided @ViewField for a field. Found: "
+                    + baseClass.getQualifiedSourceName() + "." + f.getName());
             throw new UnableToCompleteException();
           }
 
@@ -121,8 +143,9 @@ public class GuitViewHelper {
     return providedFields;
   }
 
-  private static void findUiFields(Set<GuitViewField> list, Element node, String uiFieldAttribute,
-      TreeLogger logger, TypeOracle typeOracle, Set<String> providedFields, JClassType editorPojo,
+  private static void findUiFields(Set<GuitViewField> list, Element node,
+      String uiFieldAttribute, TreeLogger logger, TypeOracle typeOracle,
+      Set<String> providedFields, JClassType editorPojo,
       HashMap<String, String> editorPaths) throws UnableToCompleteException {
     String field = node.getAttribute(uiFieldAttribute);
     if (node.hasAttribute(uiFieldAttribute)) {
@@ -134,7 +157,8 @@ public class GuitViewHelper {
         if (namespace.startsWith("urn:import:")) {
           namespace = namespace.substring(11);
         } else {
-          logger.log(TreeLogger.ERROR, String.format("Bad namespace. Found: %s", node.toString()));
+          logger.log(TreeLogger.ERROR,
+              String.format("Bad namespace. Found: %s", node.toString()));
           throw new UnableToCompleteException();
         }
         name = node.getNodeName().substring(prefix.length() + 1);
@@ -145,58 +169,60 @@ public class GuitViewHelper {
       }
 
       // GwtEditor
-      String path =
-          editorPojo != null && editorPaths.containsKey(field) ? "@"
-              + Path.class.getCanonicalName() + "(\"" + editorPaths.get(field) + "\") " : "";
+      String path = editorPojo != null && editorPaths.containsKey(field) ? "@"
+          + Path.class.getCanonicalName() + "(\"" + editorPaths.get(field)
+          + "\") " : "";
 
       JMethod method = null;
       if (editorPojo != null) {
         try {
-          method =
-              editorPojo.getMethod(
-                  "get" + field.substring(0, 1).toUpperCase() + field.substring(1), new JType[0]);
+          method = editorPojo.getMethod("get"
+              + field.substring(0, 1).toUpperCase() + field.substring(1),
+              new JType[0]);
         } catch (NotFoundException e) {
           // Do nothing
         }
       }
-      String ignore =
-          editorPojo != null && path.isEmpty()
-              && (editorPojo.getField(field) == null && method == null) ? "@"
-              + Ignore.class.getCanonicalName() + " " : "";
+      String ignore = editorPojo != null && path.isEmpty()
+          && (editorPojo.getField(field) == null && method == null) ? "@"
+          + Ignore.class.getCanonicalName() + " " : "";
 
       String type = namespace + "." + name;
       list.add(new GuitViewField(field, type, path + ignore + "@UiField"
-          + (providedFields.contains(field) ? "(provided=true) " : " ") + " public " + type + " "
-          + field + ";"));
+          + (providedFields.contains(field) ? "(provided=true) " : " ")
+          + " public " + type + " " + field + ";"));
     }
 
     NodeList children = node.getChildNodes();
     for (int n = 0; n < children.getLength(); n++) {
       Node item = children.item(n);
       if (item.getNodeType() == Node.ELEMENT_NODE) {
-        findUiFields(list, (Element) item, uiFieldAttribute, logger, typeOracle, providedFields,
-            editorPojo, editorPaths);
+        findUiFields(list, (Element) item, uiFieldAttribute, logger,
+            typeOracle, providedFields, editorPojo, editorPaths);
       }
     }
   }
 
-  public static boolean isOnViewPackage(JClassType baseClass, GeneratorContext context,
-      TreeLogger logger) throws UnableToCompleteException {
+  public static boolean isOnViewPackage(JClassType baseClass,
+      GeneratorContext context, TreeLogger logger)
+      throws UnableToCompleteException {
     URL url = getDefaultUiTemplateURL(baseClass, context, logger);
     String path = url.getPath();
-    path = (path.endsWith("ui.xml")) ? path.substring(0, path.lastIndexOf("/")) : path;
+    path = (path.endsWith("ui.xml")) ? path.substring(0, path.lastIndexOf("/"))
+        : path;
 
     return path.endsWith("/view");
   }
 
-  public static URL getDefaultUiTemplateURL(JClassType presenterClass, GeneratorContext context,
-      TreeLogger logger) throws UnableToCompleteException {
+  public static URL getDefaultUiTemplateURL(JClassType presenterClass,
+      GeneratorContext context, TreeLogger logger)
+      throws UnableToCompleteException {
     return getUiTemplateURL(presenterClass,
         getDeclaredTemplateName(presenterClass, context, logger), logger);
   }
 
-  public static URL getUiTemplateURL(JClassType presenterClass, String templateFile,
-      TreeLogger logger) throws UnableToCompleteException {
+  public static URL getUiTemplateURL(JClassType presenterClass,
+      String templateFile, TreeLogger logger) throws UnableToCompleteException {
     URL url = getResource(presenterClass, templateFile);
     if (url == null) {
       url = getResource(presenterClass, "view/" + templateFile);
@@ -209,8 +235,8 @@ public class GuitViewHelper {
     return url;
   }
 
-  public static boolean uiTemplateExists(JClassType presenterClass, String templateFile,
-      TreeLogger logger) {
+  public static boolean uiTemplateExists(JClassType presenterClass,
+      String templateFile, TreeLogger logger) {
     URL url = getResource(presenterClass, templateFile);
     if (url == null) {
       url = getResource(presenterClass, "view/" + templateFile);
@@ -222,20 +248,23 @@ public class GuitViewHelper {
     return true;
   }
 
-  private static Document getW3cDoc(JClassType presenterClass, String templateFile,
-      TreeLogger logger) throws UnableToCompleteException {
+  private static Document getW3cDoc(JClassType presenterClass,
+      String templateFile, TreeLogger logger) throws UnableToCompleteException {
     // String templateFile = getDeclaredTemplateName(baseClass);
     URL url = getUiTemplateURL(presenterClass, templateFile, logger);
     return getDocument(url, logger);
   }
 
-  private static Document getDocument(URL url, TreeLogger logger) throws UnableToCompleteException {
+  private static Document getDocument(URL url, TreeLogger logger)
+      throws UnableToCompleteException {
     Document doc = null;
     try {
       doc = new W3cDomHelper(logger).documentFor(url);
     } catch (SAXParseException e) {
-      logger.log(TreeLogger.ERROR, String.format("Error parsing XML (line " + e.getLineNumber()
-          + "): " + e.getMessage(), e));
+      logger.log(
+          TreeLogger.ERROR,
+          String.format("Error parsing XML (line " + e.getLineNumber() + "): "
+              + e.getMessage(), e));
       throw new UnableToCompleteException();
     }
     return doc;
@@ -263,8 +292,10 @@ public class GuitViewHelper {
     }
   }
 
-  private static String findGwtDomElementTypeForTag(String tag, TypeOracle oracle) {
-    JClassType elementClass = oracle.findType("com.google.gwt.dom.client.Element");
+  private static String findGwtDomElementTypeForTag(String tag,
+      TypeOracle oracle) {
+    JClassType elementClass = oracle
+        .findType("com.google.gwt.dom.client.Element");
     JClassType[] types = elementClass.getSubtypes();
     for (JClassType type : types) {
       TagName annotation = type.getAnnotation(TagName.class);
@@ -279,11 +310,13 @@ public class GuitViewHelper {
     return elementClass.getName();
   }
 
-  public static String getDeclaredTemplateName(JClassType baseClass, GeneratorContext context,
-      TreeLogger logger) throws UnableToCompleteException {
+  public static String getDeclaredTemplateName(JClassType baseClass,
+      GeneratorContext context, TreeLogger logger)
+      throws UnableToCompleteException {
     String templateFile = baseClass.getSimpleSourceName() + ".ui.xml";
     if (baseClass.isAnnotationPresent(ViewProperties.class)) {
-      String template = baseClass.getAnnotation(ViewProperties.class).template();
+      String template = baseClass.getAnnotation(ViewProperties.class)
+          .template();
       if (!template.isEmpty()) {
         templateFile = template;
       }
@@ -292,7 +325,8 @@ public class GuitViewHelper {
     SelectionProperty uixmlprefix;
     try {
       PropertyOracle propertyOracle = context.getPropertyOracle();
-      uixmlprefix = propertyOracle.getSelectionProperty(logger, "ui.xml.prefix");
+      uixmlprefix = propertyOracle
+          .getSelectionProperty(logger, "ui.xml.prefix");
     } catch (BadPropertyValueException e) {
       throw new RuntimeException(e);
     }
@@ -305,8 +339,8 @@ public class GuitViewHelper {
     } else if (uiTemplateExists(baseClass, fallbackValue + templateFile, logger)) {
       return fallbackValue + templateFile;
     } else {
-      logger.log(Type.ERROR, "Cannot find " + currentValue + templateFile + " or " + fallbackValue
-          + templateFile);
+      logger.log(Type.ERROR, "Cannot find " + currentValue + templateFile
+          + " or " + fallbackValue + templateFile);
       throw new UnableToCompleteException();
     }
   }

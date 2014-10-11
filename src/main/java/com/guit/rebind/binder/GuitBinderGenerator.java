@@ -67,7 +67,7 @@ import com.guit.client.binder.ViewPool;
 import com.guit.client.dom.Event;
 import com.guit.client.dom.impl.ElementImpl;
 import com.guit.client.dom.impl.EventImpl;
-import com.guit.rebind.common.AbstractGeneratorExt;
+import com.guit.rebind.common.AbstractGenerator;
 import com.guit.rebind.gin.GinOracle;
 import com.guit.rebind.guitview.GuitViewField;
 import com.guit.rebind.guitview.GuitViewGenerator;
@@ -85,7 +85,7 @@ import java.util.logging.Logger;
 
 import elemental.events.EventListener;
 
-public class GuitBinderGenerator extends AbstractGeneratorExt {
+public class GuitBinderGenerator extends AbstractGenerator {
 
   private static final String GUIT_INFO = "guit-info";
   private static Method getAnnotationsMethod;
@@ -155,30 +155,14 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  protected RebindResult generate() throws UnableToCompleteException {
-    if (checkAlreadyGenerated(createdClassName)) {
-      return new RebindResult(RebindMode.USE_ALL_CACHED, createdClassName);
-    }
-
+  protected void generate(SourceWriter writer) throws UnableToCompleteException {
     // Do we need to check this?
     JClassType presenterType =
         baseClass.getImplementedInterfaces()[0].isParameterized().getTypeArgs()[0];
 
     // Presenter or controller
     boolean isPresenter = checkIsPresenter(presenterType);
-
-    CachedGeneratorResult cachedGeneratorResult = context.getCachedGeneratorResult();
-    if (cachedGeneratorResult != null) {
-      Object clientData = cachedGeneratorResult.getClientData(GUIT_INFO);
-      if (clientData != null) {
-        HashMap<String, Object> lastBindingData = (HashMap<String, Object>) clientData;
-        if (lastBindingData.equals(makeUnitData(presenterType, isPresenter))) {
-          return new RebindResult(RebindMode.USE_ALL_CACHED, createdClassName);
-        }
-      }
-    }
 
     hasNativeEventType =
         hasNativeEventType == null ? getType(HasNativeEvent.class.getCanonicalName())
@@ -196,15 +180,6 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
 
     checkForRepetition(presenterType);
 
-    ClassSourceFileComposerFactory composer = createComposer();
-    processComposer(composer);
-    composer.getCreatedClassName();
-    PrintWriter printWriter = createPrintWriter();
-    if (printWriter == null) {
-      return new RebindResult(RebindMode.USE_ALL_CACHED, createdClassName);
-    }
-
-    SourceWriter writer = composer.createSourceWriter(context, printWriter);
     writer.println(bindingsDeclaration);
     writer.println(eventBusbindingsDeclaration);
 
@@ -362,15 +337,6 @@ public class GuitBinderGenerator extends AbstractGeneratorExt {
     writer.println("eventBus = null;");
     writer.outdent();
     writer.println("}");
-    writer.commit(logger);
-
-    if (context.isGeneratorResultCachingEnabled()) {
-      RebindResult result = new RebindResult(RebindMode.USE_ALL_NEW, createdClassName);
-      result.putClientData(GUIT_INFO, makeUnitData(presenterType, isPresenter));
-      return result;
-    } else {
-      return new RebindResult(RebindMode.USE_ALL_NEW_WITH_NO_CACHING, createdClassName);
-    }
   }
 
   private HashMap<String, Object> makeUnitData(JClassType presenterType, boolean isPresenter)

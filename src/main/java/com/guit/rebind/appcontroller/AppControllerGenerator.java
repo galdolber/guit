@@ -15,6 +15,11 @@
  */
 package com.guit.rebind.appcontroller;
 
+import com.google.gwt.core.ext.CachedGeneratorResult;
+import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.RebindMode;
+import com.google.gwt.core.ext.RebindResult;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.user.client.History;
@@ -28,6 +33,7 @@ import com.guit.rebind.common.AbstractGenerator;
 import com.guit.rebind.gin.GinInjectorGenerator;
 import com.guit.rebind.gin.GinOracle;
 
+import java.util.Date;
 import java.util.List;
 
 public class AppControllerGenerator extends AbstractGenerator {
@@ -38,7 +44,8 @@ public class AppControllerGenerator extends AbstractGenerator {
   protected void generate(SourceWriter writer) throws UnableToCompleteException {
     ginInjectorGenerator.generate(logger, context, null);
 
-    List<String> appControllers = getConfigurationProperty("app.controller").getValues();
+    List<String> appControllers = getConfigurationProperty("app.controller")
+        .getValues();
 
     writer.println("public void inject() {");
     writer.indent();
@@ -51,38 +58,47 @@ public class AppControllerGenerator extends AbstractGenerator {
     writer.println("getPlaceManager();");
 
     // Google analytics setup
-    String googleAnalyticsUa = getConfigurationProperty("app.google.analytics").getValues().get(0);
+    String googleAnalyticsUa = getConfigurationProperty("app.google.analytics")
+        .getValues().get(0);
     if (!googleAnalyticsUa.isEmpty()) {
-      writer.println(GinOracle.getInjectedInstance(GoogleAnalyticsTracker.class.getCanonicalName())
-          + ".setAccount(\"" + googleAnalyticsUa + "\");");
+      writer.println(GinOracle.getInjectedInstance(GoogleAnalyticsTracker.class
+          .getCanonicalName()) + ".setAccount(\"" + googleAnalyticsUa + "\");");
     }
 
     // Fire current history state on load?
-    if (getConfigurationProperty("app.fire.current.history.state").getValues().get(0)
-        .equals("true")) {
-      writer.println(History.class.getCanonicalName() + ".fireCurrentHistoryState();");
+    if (getConfigurationProperty("app.fire.current.history.state").getValues()
+        .get(0).equals("true")) {
+      writer.println(History.class.getCanonicalName()
+          + ".fireCurrentHistoryState();");
     }
 
     writer.outdent();
     writer.println("}");
 
-    writer.println("public " + PlaceManager.class.getCanonicalName() + " getPlaceManager() {");
+    writer.println("public " + PlaceManager.class.getCanonicalName()
+        + " getPlaceManager() {");
     writer.indent();
-    writer.print("return " + GinOracle.getInjectedInstance(PlaceManager.class.getCanonicalName())
+    writer.print("return "
+        + GinOracle.getInjectedInstance(PlaceManager.class.getCanonicalName())
         + ";");
     writer.outdent();
     writer.println("}");
 
-    writer.println("public " + CommandService.class.getCanonicalName() + " getCommandService() {");
+    writer.println("public " + CommandService.class.getCanonicalName()
+        + " getCommandService() {");
     writer.indent();
-    writer.print("return " + GinOracle.getInjectedInstance(CommandService.class.getCanonicalName())
-        + ";");
+    writer
+        .print("return "
+            + GinOracle.getInjectedInstance(CommandService.class
+                .getCanonicalName()) + ";");
     writer.outdent();
     writer.println("}");
 
-    writer.println("public " + EventBus.class.getCanonicalName() + " getEventBus() {");
+    writer.println("public " + EventBus.class.getCanonicalName()
+        + " getEventBus() {");
     writer.indent();
-    writer.println("return " + GinOracle.getInjectedInstance(EventBus.class.getCanonicalName())
+    writer.println("return "
+        + GinOracle.getInjectedInstance(EventBus.class.getCanonicalName())
         + ";");
     writer.outdent();
     writer.println("}");
@@ -91,5 +107,14 @@ public class AppControllerGenerator extends AbstractGenerator {
   @Override
   protected void processComposer(ClassSourceFileComposerFactory composer) {
     composer.addImplementedInterface(typeName);
+  }
+  
+  @Override
+  protected RebindMode rebindMode() {
+    CachedGeneratorResult last = context.getCachedGeneratorResult();
+    if (last != null) {
+      return RebindMode.USE_ALL_CACHED;
+    }
+    return RebindMode.USE_ALL_NEW;
   }
 }

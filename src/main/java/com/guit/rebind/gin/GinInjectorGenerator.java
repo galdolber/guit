@@ -16,9 +16,13 @@
 package com.guit.rebind.gin;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.ext.CachedGeneratorResult;
 import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.RebindMode;
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.inject.client.GinModule;
 import com.google.gwt.inject.client.GinModules;
@@ -81,9 +85,13 @@ public class GinInjectorGenerator extends AbstractGenerator implements GinContex
   }
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext context, String typeName)
+  public RebindResult generateIncrementally(TreeLogger logger,
+      GeneratorContext context, String typeName)
       throws UnableToCompleteException {
     saveVariables(logger, context, typeName);
+    if (typeOracle.findType(GinOracle.packageName, GinOracle.className) != null) {
+      return new RebindResult(RebindMode.USE_EXISTING, GinOracle.packageName + "." + GinOracle.className);
+    }
 
     // Clear
     injectedClasses.clear();
@@ -148,7 +156,7 @@ public class GinInjectorGenerator extends AbstractGenerator implements GinContex
       writer.commit(logger);
     }
 
-    return null;
+    return new RebindResult(RebindMode.USE_PARTIAL_CACHED, GinOracle.packageName + "." + GinOracle.className);
   }
 
   private void load(String classType) {
